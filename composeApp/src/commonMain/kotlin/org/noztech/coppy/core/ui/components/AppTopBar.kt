@@ -33,6 +33,7 @@ import com.composables.icons.lucide.X
 import coppy.composeapp.generated.resources.Res
 import coppy.composeapp.generated.resources.logo
 import org.jetbrains.compose.resources.painterResource
+import org.noztech.coppy.navigation.AuthRoutes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -111,7 +112,7 @@ fun AppTopBar(
                 }
             },
             actions = {
-                IconButton(onClick = { /* notifications */ }) {
+                IconButton(onClick = { navController.navigate(AuthRoutes.Settings) }) {
                     BadgedBox(
                         badge = {
                             Badge(

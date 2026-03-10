@@ -16,4 +16,7 @@ sealed class AuthRoutes {
 
     @Serializable
     data class CreateList(val id: Long? = null): AuthRoutes()
+
+    @Serializable
+    object Settings : AuthRoutes()
 }

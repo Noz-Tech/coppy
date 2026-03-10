@@ -11,6 +11,7 @@ import org.noztech.coppy.feature.auth.AuthScreen
 import org.noztech.coppy.feature.home.presentation.CreateListScreen
 import org.noztech.coppy.feature.home.presentation.GroupScreen
 import org.noztech.coppy.feature.home.presentation.HomeScreen
+import org.noztech.coppy.feature.settings.presentation.SettingsScreen
 import org.noztech.coppy.feature.welcome.presentation.WelcomeScreen
 
 @Composable
@@ -35,6 +36,9 @@ fun AppNavHost(
             val profile: AuthRoutes.CreateList = backStackEntry.toRoute()
             CreateListScreen(navController,profile.id)
         }
+
+        composable<AuthRoutes.Settings> { SettingsScreen(navController) }
+
     }
 }
 
