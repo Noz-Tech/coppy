@@ -25,7 +25,7 @@ fun GroupTopBar(navController: NavController) {
     CenterAlignedTopAppBar(
         title = {
             Text(
-                text = "Group",
+                text = "Folder",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
@@ -33,7 +33,7 @@ fun GroupTopBar(navController: NavController) {
         },
         navigationIcon = {
             IconButton(onClick = {
-               navController.popBackStack()
+                navController.popBackStack()
             }) {
                 Icon(
                     imageVector = Lucide.ArrowLeft,
@@ -48,16 +48,6 @@ fun GroupTopBar(navController: NavController) {
             navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
             actionIconContentColor = MaterialTheme.colorScheme.onSurface
         ),
-        actions = {
-            IconButton(onClick = {
-                navController.currentBackStack
-            }) {
-                Icon(
-                    imageVector = Lucide.Trash2,
-                    contentDescription = "Delete",
-                    modifier = Modifier.size(22 .dp)
-                )
-            }
-        }
+        actions = {}
     )
 }

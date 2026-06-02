@@ -24,6 +24,7 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
+            linkerOpts("-lsqlite3")
         }
     }
 
@@ -32,13 +33,12 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.biometric)
+            implementation(libs.sqlcipher.android)
 
-            implementation(libs.ktor.client.okhttp)
             implementation(libs.sqldelight.android)
         }
 
         iosMain.dependencies {
-            implementation(libs.ktor.client.darwin)
             implementation(libs.sqldelight.ios)
         }
         commonMain.dependencies {
@@ -53,21 +53,11 @@ kotlin {
 
             implementation(libs.androidx.navigation.compose)
             implementation(libs.kotlinx.serialization.json)
-            implementation(libs.kotlinx.datetime)
             //Koin
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
             implementation(libs.koin.compose.viewmodel.navigation)
-            //Ktor
-            implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.ktor.serialization.kotlinx.json)
-            implementation(libs.ktor.client.logging)
-            //Datastore
-            implementation(libs.datastore)
-            implementation(libs.datastore.preferences)
-            implementation(libs.atomicfu)
             //Multiplatform Settings
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.no.arg)
@@ -76,11 +66,6 @@ kotlin {
             implementation(libs.sqldelight.coroutines.extensions)
             implementation(libs.lucide.icons)
 
-            implementation(libs.permissions.compose)
-            implementation(libs.permissions.camera)
-
-            implementation(libs.coil.compose)
-            implementation(libs.imagepickerkmp)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -117,7 +102,6 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
-    implementation(libs.permissions)
 }
 
 sqldelight {

@@ -1,7 +1,7 @@
 package org.noztech.coppy.feature.home.data
 
 import kotlinx.coroutines.flow.Flow
-import org.noztech.VaultGroup
+import org.noztech.EntryGroup
 import org.noztech.coppy.core.database.dao.GroupDao
 import org.noztech.coppy.feature.home.domain.respository.GroupRepository
 
@@ -21,10 +21,10 @@ class GroupRepositoryImpl(
         dao.deleteGroup(id)
     }
 
-    override suspend fun getGroupById(id: Long): VaultGroup? =
+    override suspend fun getGroupById(id: Long): EntryGroup? =
         dao.getGroupById(id)
 
-    override fun getGroups(): Flow<List<VaultGroup>> {
+    override fun getGroups(): Flow<List<EntryGroup>> {
         return dao.getGroups()
     }
 }

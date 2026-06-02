@@ -1,6 +1,6 @@
 package org.noztech.coppy.core.util
 
-expect class BiometricAuthenticator {
+expect class BiometricAuthenticator() {
     fun canAuthenticate(): BiometricAuthStatus
     fun authenticate(title: String, description: String, onResult: (BiometricAuthResult) -> Unit)
 }

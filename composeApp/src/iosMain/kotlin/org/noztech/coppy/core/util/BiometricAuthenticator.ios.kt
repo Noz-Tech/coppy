@@ -1,24 +1,19 @@
 package org.noztech.coppy.core.util
 
+import kotlinx.cinterop.ExperimentalForeignApi
 import platform.LocalAuthentication.LAContext
-import platform.LocalAuthentication.LAPolicy.LAPolicyDeviceOwnerAuthenticationWithBiometrics
-import platform.LocalAuthentication.LAError.LAErrorUserCancel
-import platform.LocalAuthentication.LAError.LAErrorBiometryNotEnrolled
+import platform.LocalAuthentication.LAErrorUserCancel
+import platform.LocalAuthentication.LAPolicyDeviceOwnerAuthenticationWithBiometrics
 
 actual class BiometricAuthenticator {
 
+    @OptIn(ExperimentalForeignApi::class)
     actual fun canAuthenticate(): BiometricAuthStatus {
         val context = LAContext()
-        var error: NSError? = null
-        if (context.canEvaluatePolicy(LAPolicyDeviceOwnerAuthenticationWithBiometrics, error.ptr)) {
-            return BiometricAuthStatus.AVAILABLE
+        return if (context.canEvaluatePolicy(LAPolicyDeviceOwnerAuthenticationWithBiometrics, null)) {
+            BiometricAuthStatus.AVAILABLE
         } else {
-            val laError = error?.let { it as LAError }
-            return when (laError?.code) {
-                LAErrorBiometryNotEnrolled -> BiometricAuthStatus.NOT_ENROLLED
-                // Add other LAError codes as needed for more specific handling
-                else -> BiometricAuthStatus.UNKNOWN_ERROR
-            }
+            BiometricAuthStatus.UNKNOWN_ERROR
         }
     }
 
@@ -26,18 +21,17 @@ actual class BiometricAuthenticator {
         val context = LAContext()
         context.evaluatePolicy(
             LAPolicyDeviceOwnerAuthenticationWithBiometrics,
-            "Authenticate to access this feature", // Reason string for iOS
-            completionHandler = { success, error ->
+            description.ifBlank { title },
+            reply = { success, error ->
                 if (success) {
                     onResult(BiometricAuthResult.Success)
                 } else {
-                    val laError = error?.let { it as LAError }
-                    when (laError?.code) {
+                    when (error?.code) {
                         LAErrorUserCancel -> onResult(BiometricAuthResult.UserCancelled)
                         else -> onResult(BiometricAuthResult.Error)
                     }
                 }
-            }
+            },
         )
     }
 }

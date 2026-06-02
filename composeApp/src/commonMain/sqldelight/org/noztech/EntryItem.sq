@@ -1,67 +1,75 @@
-CREATE TABLE VaultItem (
+CREATE TABLE EntryItem (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    groupId INTEGER REFERENCES VaultGroup(id) ON DELETE CASCADE,
+    groupId INTEGER REFERENCES EntryGroup(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     value TEXT,
+    entryType TEXT NOT NULL DEFAULT 'CUSTOM',
+    issuer TEXT,
+    expiresAt TEXT,
+    securityCode TEXT,
     hidden INTEGER NOT NULL DEFAULT 0,
     createdAt TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     updatedAt TEXT
 );
 
 insertItem:
-INSERT INTO VaultItem (
-    groupId, title, value, hidden
+INSERT INTO EntryItem (
+    groupId, title, value, entryType, issuer, expiresAt, securityCode, hidden
 )
-VALUES (?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 updateItem:
-UPDATE VaultItem
+UPDATE EntryItem
 SET
     groupId = ?,
     title = ?,
     value = ?,
+    entryType = ?,
+    issuer = ?,
+    expiresAt = ?,
+    securityCode = ?,
     updatedAt = (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 WHERE id = ?;
 
 updateItemVisibility:
-UPDATE VaultItem
+UPDATE EntryItem
 SET hidden = CASE WHEN hidden = 1 THEN 0 ELSE 1 END,
     updatedAt = (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 WHERE id = ?;
 
 deleteItemById:
-DELETE FROM VaultItem
+DELETE FROM EntryItem
 WHERE id = ?;
 
 deleteItemsByGroupId:
-DELETE FROM VaultItem
+DELETE FROM EntryItem
 WHERE groupId = ?;
 
 getItems:
-SELECT * FROM VaultItem
+SELECT * FROM EntryItem
 WHERE hidden = 0;
 
 getItemsByGroupId:
-SELECT * FROM VaultItem
+SELECT * FROM EntryItem
 WHERE groupId = ?
 ORDER BY createdAt DESC;
 
 getItemById:
-SELECT * FROM VaultItem
+SELECT * FROM EntryItem
 WHERE id = ?;
 
 getHiddenItems:
-SELECT * FROM VaultItem
+SELECT * FROM EntryItem
 WHERE hidden = 1
 ORDER BY createdAt DESC;
 
 getItemCountByGroup:
 SELECT groupId, COUNT(*) AS itemCount
-FROM VaultItem
+FROM EntryItem
 WHERE groupId IS NOT NULL
 GROUP BY groupId;
 
 getItemCountForGroup:
 SELECT COUNT(*) AS itemCount
-FROM VaultItem
+FROM EntryItem
 WHERE groupId = ?;

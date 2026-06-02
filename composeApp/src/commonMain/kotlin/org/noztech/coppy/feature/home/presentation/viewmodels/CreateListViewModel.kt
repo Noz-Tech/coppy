@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import org.noztech.VaultGroup
-import org.noztech.VaultItem
+import org.noztech.EntryGroup
+import org.noztech.EntryItem
 import org.noztech.coppy.feature.home.domain.usecase.CreateItemUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetGroupsUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetItemByIdUseCase
@@ -30,12 +30,12 @@ class CreateListViewModel(
         _imagePath.value = path
     }
 
-    fun getItemById(itemId: Long): VaultItem? {
+    fun getItemById(itemId: Long): EntryItem? {
         return getItemByIdUseCase(itemId)
     }
 
 
-    val groups: StateFlow<List<VaultGroup>> = getGroupsUseCase()
+    val groups: StateFlow<List<EntryGroup>> = getGroupsUseCase()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -52,7 +52,19 @@ class CreateListViewModel(
     private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
     val saveState = _saveState.asStateFlow()
 
-    fun saveItem(title: String, value: String, existingItemId: Long? = null) {
+    fun showValidationError(message: String) {
+        _saveState.value = SaveState.Error(message)
+    }
+
+    fun saveItem(
+        title: String,
+        value: String,
+        entryType: String,
+        issuer: String?,
+        expiresAt: String?,
+        securityCode: String?,
+        existingItemId: Long? = null
+    ) {
         viewModelScope.launch {
             if (title.isBlank() || value.isBlank()) {
                 _saveState.value = SaveState.Error("Name and Value cannot be empty")
@@ -64,10 +76,10 @@ class CreateListViewModel(
             try {
                 val groupId = _selectedGroupId.value
                 if (existingItemId != null) {
-                    updateItemUseCase(existingItemId, groupId, title, value)
+                    updateItemUseCase(existingItemId, groupId, title, value, entryType, issuer, expiresAt, securityCode)
                     _saveState.value = SaveState.Success("Item updated successfully")
                 } else {
-                    createItemUseCase(groupId, title, value)
+                    createItemUseCase(groupId, title, value, entryType, issuer, expiresAt, securityCode)
                     _saveState.value = SaveState.Success("Item created successfully")
                 }
             } catch (e: Exception) {

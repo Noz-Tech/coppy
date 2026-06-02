@@ -1,7 +1,7 @@
 package org.noztech.coppy.feature.home.domain.usecase
 
 import kotlinx.coroutines.flow.Flow
-import org.noztech.VaultGroup
+import org.noztech.EntryGroup
 import org.noztech.coppy.feature.home.domain.respository.GroupRepository
 
 class CreateGroupUseCase(
@@ -31,5 +31,5 @@ class DeleteGroupUseCase(
 class GetGroupsUseCase(
     private val repository: GroupRepository
 ) {
-    operator fun invoke(): Flow<List<VaultGroup>> = repository.getGroups()
+    operator fun invoke(): Flow<List<EntryGroup>> = repository.getGroups()
 }

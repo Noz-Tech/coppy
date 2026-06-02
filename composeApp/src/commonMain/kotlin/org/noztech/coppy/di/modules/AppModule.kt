@@ -12,13 +12,12 @@ import org.noztech.coppy.core.database.DatabaseHelper
 import org.noztech.coppy.core.database.dao.GroupDao
 import org.noztech.coppy.core.database.dao.ImageDao
 import org.noztech.coppy.core.database.dao.ItemDao
-import org.noztech.coppy.core.util.BiometricAuthenticator
-import org.noztech.coppy.feature.auth.AuthViewModel
 import org.noztech.coppy.feature.home.data.GroupRepositoryImpl
 import org.noztech.coppy.feature.home.data.ImageRepositoryImpl
 import org.noztech.coppy.feature.home.data.ItemRepositoryImpl
 import org.noztech.coppy.feature.home.domain.usecase.CreateGroupUseCase
 import org.noztech.coppy.feature.home.domain.usecase.CreateItemUseCase
+import org.noztech.coppy.feature.home.domain.usecase.DeleteGroupUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetGroupsUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetItemCountByGroupUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetItemCountForGroupUseCase
@@ -31,6 +30,7 @@ import org.noztech.coppy.feature.home.domain.usecase.GetItemByIdUseCase
 import org.noztech.coppy.feature.home.domain.usecase.ToggleItemVisibilityUseCase
 import org.noztech.coppy.feature.home.domain.usecase.UpdateItemUseCase
 import org.noztech.coppy.feature.home.presentation.viewmodels.CreateListViewModel
+import org.noztech.coppy.feature.home.presentation.viewmodels.EntryDetailViewModel
 import org.noztech.coppy.feature.home.presentation.viewmodels.GroupViewModel
 import org.noztech.coppy.feature.home.presentation.viewmodels.HomeViewModel
 import org.noztech.coppy.feature.welcome.presentation.WelcomeViewModel
@@ -38,21 +38,18 @@ import org.noztech.coppy.feature.welcome.presentation.WelcomeViewModel
 val appModule = module {
     single { Settings() }
     single { AppSettings(get()) }
-   // single<FirebaseManager> { PlatformFirebaseManager }
+    // single<FirebaseManager> { PlatformFirebaseManager }
     single { AppDatabase(get<DatabaseDriverFactory>().createDriver()) }
     single<DatabaseHelper> { DatabaseHelper(get()) }
-
-    viewModel { (biometricAuthenticator: BiometricAuthenticator) ->
-        AuthViewModel(biometricAuthenticator)
-    }
-    single { GroupDao(get<AppDatabase>().vaultGroupQueries) }
-    single { ItemDao(get<AppDatabase>().vaultItemQueries) }
-    single { ImageDao(get<AppDatabase>().vaultImageQueries) }
+    single { GroupDao(get<AppDatabase>().entryGroupQueries) }
+    single { ItemDao(get<AppDatabase>().entryItemQueries) }
+    single { ImageDao(get<AppDatabase>().entryImageQueries) }
 
     singleOf(::GroupRepositoryImpl) { bind<GroupRepository>() }
     singleOf(::ItemRepositoryImpl) { bind<ItemRepository>() }
     singleOf(::ImageRepositoryImpl) { bind<ImageRepository>() }
     single { CreateGroupUseCase(get()) }
+    single { DeleteGroupUseCase(get()) }
     single { GetGroupsUseCase(get()) }
     single { GetItemByIdUseCase(get()) }
     single { GetItemCountByGroupUseCase(get()) }
@@ -64,7 +61,8 @@ val appModule = module {
     single { DeleteItemUseCase(get()) }
 
     viewModel { WelcomeViewModel(get()) }
-    viewModel { HomeViewModel(get(),get(), get(), get()) }
-    viewModel { GroupViewModel(get(),get(),get()) }
-    viewModel { CreateListViewModel(get(),get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get()) }
+    viewModel { GroupViewModel(get(), get(), get(), get()) }
+    viewModel { CreateListViewModel(get(), get(), get(), get()) }
+    viewModel { EntryDetailViewModel(get(), get()) }
 }

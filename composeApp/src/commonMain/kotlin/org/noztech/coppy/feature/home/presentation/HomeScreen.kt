@@ -60,9 +60,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -80,17 +78,23 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import org.noztech.coppy.common.ConfirmActionType
+import org.noztech.coppy.core.AppSettings
 import org.noztech.coppy.core.ui.components.AppTopBar
 import org.noztech.coppy.core.ui.components.ConfirmActionDialog
+import org.noztech.coppy.core.util.BiometricAuthResult
+import org.noztech.coppy.core.util.BiometricAuthenticator
 import org.noztech.coppy.core.util.CopyToClipboard
 import org.noztech.coppy.core.util.ShareText
 import org.noztech.coppy.feature.home.presentation.viewmodels.HomeViewModel
 import org.noztech.coppy.navigation.AuthRoutes
+import org.koin.compose.getKoin
 
 @Composable
 fun HomeScreen(navController: NavController) {
     val coroutineScope = rememberCoroutineScope()
     val viewModel = koinViewModel<HomeViewModel>()
+    val appSettings: AppSettings = getKoin().get()
+    val biometricAuthenticator = remember { BiometricAuthenticator() }
     val groups by viewModel.groups.collectAsState()
     val filteredItems by viewModel.filteredItems.collectAsState()
     val selectedGroupId by viewModel.selectedGroupId.collectAsState()
@@ -103,6 +107,24 @@ fun HomeScreen(navController: NavController) {
 
     var showConfirmDialog by remember { mutableStateOf(false) }
     var confirmActionType by remember { mutableStateOf<ConfirmActionType?>(null) }
+
+    fun runBiometricGuard(
+        enabled: Boolean,
+        title: String,
+        description: String,
+        onSuccess: () -> Unit
+    ) {
+        if (!enabled) {
+            onSuccess()
+            return
+        }
+        biometricAuthenticator.authenticate(title, description) { result ->
+            if (result == BiometricAuthResult.Success) {
+                onSuccess()
+            }
+        }
+    }
+
     val searchBarHeight by animateDpAsState(
         targetValue = if (showSearchBar) 52.dp else 0.dp,
         animationSpec = tween(durationMillis = 300, easing = EaseInOutCubic)
@@ -260,7 +282,7 @@ fun HomeScreen(navController: NavController) {
                         ) {
                             Icon(
                                 imageVector = Lucide.Folders,
-                                contentDescription = "Add group",
+                                contentDescription = "Add folder",
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -280,7 +302,7 @@ fun HomeScreen(navController: NavController) {
                     FilterChip(
                         selected = selectedGroupId == group.id,
                         onClick = { viewModel.selectGroup(group.id) },
-                        label = { Text( group.name.capitalize(Locale.current)) }
+                        label = { Text(group.name.toFolderDisplayName()) }
                     )
                 }
             }
@@ -314,8 +336,7 @@ fun HomeScreen(navController: NavController) {
                                         selectedItemId = if (isSelected) null else item.id
                                         selectedItemTitle = if (isSelected) null else item.title
                                     } else {
-                                        // normal click behavior
-                                        println("Open details for ${item.title}")
+                                        navController.navigate(AuthRoutes.EntryDetail(item.id))
                                     }
                                 },
                                 onLongClick = {
@@ -347,6 +368,12 @@ fun HomeScreen(navController: NavController) {
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     MaskableText(secretValue = item.value_.toString().uppercase())
+                                    Text(
+                                        text = item.entryType.toEntryTypeDisplayName(),
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                                    )
                                 }
                             }
 
@@ -357,11 +384,21 @@ fun HomeScreen(navController: NavController) {
                             ) {
                                 IconButton(
                                     onClick = {
-                                        CopyToClipboard("${item.title.uppercase()}: ${item.value_?.uppercase().orEmpty()}")
-                                        copied = true
-                                        coroutineScope.launch {
-                                            delay(3000)
-                                            copied = false
+                                        runBiometricGuard(
+                                            enabled = appSettings.isBiometricOnCopyEnabled(),
+                                            title = "Copy protected data",
+                                            description = "Authenticate to copy this value"
+                                        ) {
+                                            CopyToClipboard(
+                                                "${item.title.uppercase()}: ${
+                                                    item.value_?.uppercase().orEmpty()
+                                                }"
+                                            )
+                                            copied = true
+                                            coroutineScope.launch {
+                                                delay(3000)
+                                                copied = false
+                                            }
                                         }
                                     }
                                 ) {
@@ -378,11 +415,21 @@ fun HomeScreen(navController: NavController) {
 
                                 IconButton(
                                     onClick = {
-                                        val shareText = buildString {
-                                            appendLine("From Coppy App:")
-                                            appendLine("${item.title.uppercase()}: ${item.value_?.uppercase().orEmpty()}")
+                                        runBiometricGuard(
+                                            enabled = appSettings.isBiometricOnShareEnabled(),
+                                            title = "Share protected data",
+                                            description = "Authenticate to share this value"
+                                        ) {
+                                            val shareText = buildString {
+                                                appendLine("From Coppy App:")
+                                                appendLine(
+                                                    "${item.title.uppercase()}: ${
+                                                        item.value_?.uppercase().orEmpty()
+                                                    }"
+                                                )
+                                            }
+                                            ShareText(shareText)
                                         }
-                                        ShareText(shareText)
                                     },
                                 ) {
                                     Icon(
@@ -486,19 +533,37 @@ fun HomeScreen(navController: NavController) {
 
 @Composable
 fun MaskableText(secretValue: String) {
+    val appSettings: AppSettings = getKoin().get()
+    val biometricAuthenticator = remember { BiometricAuthenticator() }
     var isVisible by remember { mutableStateOf(false) }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy((-10).dp),
-        modifier = Modifier.height(32.dp)) {
+        modifier = Modifier.height(32.dp)
+    ) {
         Text(
             text = if (isVisible) secretValue else maskValue(secretValue),
             fontWeight = FontWeight.Medium,
             fontSize = 16.sp,
             color = MaterialTheme.colorScheme.onSurface
         )
-        IconButton(onClick = { isVisible = !isVisible }) {
+        IconButton(onClick = {
+            if (isVisible) {
+                isVisible = false
+            } else if (appSettings.isBiometricOnRevealEnabled()) {
+                biometricAuthenticator.authenticate(
+                    title = "Reveal protected data",
+                    description = "Authenticate to reveal this value"
+                ) { result ->
+                    if (result == BiometricAuthResult.Success) {
+                        isVisible = true
+                    }
+                }
+            } else {
+                isVisible = true
+            }
+        }) {
             Icon(
                 imageVector = if (isVisible) Lucide.EyeOff else Lucide.Eye,
                 contentDescription = if (isVisible) "Hide" else "Show",
@@ -515,4 +580,28 @@ fun maskValue(value: String, visibleCount: Int = 4, maskChar: Char = '•'): Str
         repeat(value.length - visibleCount) { append(maskChar) }
         append(value.takeLast(visibleCount))
     }
+}
+
+private fun String.toFolderDisplayName(): String {
+    val acronyms = setOf("id", "sss", "gsis", "atm", "cvv", "tin")
+    return trim()
+        .split(Regex("\\s+"))
+        .filter { it.isNotBlank() }
+        .joinToString(" ") { word ->
+            val lower = word.lowercase()
+            if (lower in acronyms) lower.uppercase()
+            else lower.replaceFirstChar { it.uppercase() }
+        }
+}
+
+private fun String.toEntryTypeDisplayName(): String {
+    return lowercase()
+        .split("_")
+        .filter { it.isNotBlank() }
+        .joinToString(" ") { part ->
+            when (part) {
+                "id", "sss", "gsis", "atm", "cvv", "tin" -> part.uppercase()
+                else -> part.replaceFirstChar { it.uppercase() }
+            }
+        }
 }

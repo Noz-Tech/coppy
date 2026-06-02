@@ -1,7 +1,7 @@
 package org.noztech.coppy.feature.home.domain.usecase
 
 import kotlinx.coroutines.flow.Flow
-import org.noztech.VaultImage
+import org.noztech.EntryImage
 import org.noztech.coppy.feature.home.domain.respository.ImageRepository
 
 class AddImage(private val repository: ImageRepository) {
@@ -23,13 +23,13 @@ class DeleteImage(private val repository: ImageRepository) {
 }
 
 class GetImages(private val repository: ImageRepository) {
-    suspend operator fun invoke(itemId: Long): List<VaultImage> {
+    suspend operator fun invoke(itemId: Long): List<EntryImage> {
         return repository.getImagesByItem(itemId)
     }
 }
 
 class ObserveImages(private val repository: ImageRepository) {
-    operator fun invoke(itemId: Long): Flow<List<VaultImage>> {
+    operator fun invoke(itemId: Long): Flow<List<EntryImage>> {
         return repository.observeImagesByItem(itemId)
     }
 }

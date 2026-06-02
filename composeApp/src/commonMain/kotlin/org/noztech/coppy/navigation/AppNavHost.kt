@@ -9,6 +9,7 @@ import androidx.navigation.toRoute
 import org.noztech.coppy.core.AppSettings
 import org.noztech.coppy.feature.auth.AuthScreen
 import org.noztech.coppy.feature.home.presentation.CreateListScreen
+import org.noztech.coppy.feature.home.presentation.EntryDetailScreen
 import org.noztech.coppy.feature.home.presentation.GroupScreen
 import org.noztech.coppy.feature.home.presentation.HomeScreen
 import org.noztech.coppy.feature.settings.presentation.SettingsScreen
@@ -20,13 +21,16 @@ fun AppNavHost(
     appSettings: AppSettings
 ) {
 
-    println(appSettings.isFirstLaunch())
     NavHost(
         navController = navController,
-        startDestination = if (appSettings.isFirstLaunch()) GuestRoutes.Welcome else AuthRoutes.Home
+        startDestination = when {
+            appSettings.isFirstLaunch() -> GuestRoutes.Welcome
+            appSettings.isLockOnLaunchEnabled() -> GuestRoutes.Auth
+            else -> AuthRoutes.Home
+        }
     ) {
         composable<GuestRoutes.Welcome> { WelcomeScreen(navController) }
-        composable<GuestRoutes.Auth> { AuthScreen(navController) }
+        composable<GuestRoutes.Auth> { AuthScreen(navController, appSettings) }
 
         composable<AuthRoutes.Home> { HomeScreen(navController) }
         composable<AuthRoutes.Group> { GroupScreen(navController) }
@@ -34,11 +38,14 @@ fun AppNavHost(
 
         composable<AuthRoutes.CreateList> { backStackEntry ->
             val profile: AuthRoutes.CreateList = backStackEntry.toRoute()
-            CreateListScreen(navController,profile.id)
+            CreateListScreen(navController, profile.id)
+        }
+        composable<AuthRoutes.EntryDetail> { backStackEntry ->
+            val route: AuthRoutes.EntryDetail = backStackEntry.toRoute()
+            EntryDetailScreen(navController, route.id)
         }
 
         composable<AuthRoutes.Settings> { SettingsScreen(navController) }
 
     }
 }
-

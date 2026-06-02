@@ -2,7 +2,7 @@ package org.noztech.coppy.feature.home.domain.usecase
 
 import kotlinx.coroutines.flow.Flow
 import org.noztech.GetItemCountByGroup
-import org.noztech.VaultItem
+import org.noztech.EntryItem
 import org.noztech.coppy.feature.home.domain.respository.ItemRepository
 
 class CreateItemUseCase(
@@ -12,10 +12,14 @@ class CreateItemUseCase(
         groupId: Long?,
         title: String,
         value: String?,
+        entryType: String,
+        issuer: String?,
+        expiresAt: String?,
+        securityCode: String?,
         hidden: Boolean = false
     ): Long {
 
-        return repository.createItem(groupId, title, value, hidden)
+        return repository.createItem(groupId, title, value, entryType, issuer, expiresAt, securityCode, hidden)
     }
 }
 
@@ -27,14 +31,18 @@ class UpdateItemUseCase(
         groupId: Long?,
         title: String,
         value: String?,
+        entryType: String,
+        issuer: String?,
+        expiresAt: String?,
+        securityCode: String?,
     ) {
-        repository.updateItem(id, groupId, title, value)
+        repository.updateItem(id, groupId, title, value, entryType, issuer, expiresAt, securityCode)
     }
 }
 
 class ToggleItemVisibilityUseCase(
     private val repository: ItemRepository
-){
+) {
     suspend operator fun invoke(
         id: Long,
     ) {
@@ -53,13 +61,13 @@ class DeleteItemUseCase(
 class GetItemsUseCase(
     private val repository: ItemRepository
 ) {
-    operator fun invoke(): Flow<List<VaultItem>> = repository.getItems()
+    operator fun invoke(): Flow<List<EntryItem>> = repository.getItems()
 }
 
 class GetItemByIdUseCase(
     private val repository: ItemRepository
 ) {
-    operator fun invoke(id: Long): VaultItem? {
+    operator fun invoke(id: Long): EntryItem? {
         return repository.getItemById(id)
     }
 }

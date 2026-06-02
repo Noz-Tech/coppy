@@ -2,7 +2,7 @@ package org.noztech.coppy.feature.home.data
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import org.noztech.VaultImage
+import org.noztech.EntryImage
 import org.noztech.coppy.core.database.dao.ImageDao
 import org.noztech.coppy.feature.home.domain.respository.ImageRepository
 
@@ -23,12 +23,12 @@ class ImageRepositoryImpl(
         dao.deleteImage(id)
     }
 
-    override suspend fun getImageById(id: Long): VaultImage? =
+    override suspend fun getImageById(id: Long): EntryImage? =
         dao.getImageById(id)
 
-    override suspend fun getImagesByItem(itemId: Long): List<VaultImage> =
+    override suspend fun getImagesByItem(itemId: Long): List<EntryImage> =
         dao.getImagesByItemId(itemId)
 
-    override fun observeImagesByItem(itemId: Long): Flow<List<VaultImage>> =
+    override fun observeImagesByItem(itemId: Long): Flow<List<EntryImage>> =
         dao.observeImagesByItemId(itemId).map { it }
 }

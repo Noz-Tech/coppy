@@ -14,7 +14,7 @@ import platform.Foundation.create
 import platform.Foundation.writeToFile
 
 
-actual class VaultImageStorage {
+actual class ImageStorage {
 
     @OptIn(ExperimentalForeignApi::class)
     private fun vaultDir(): String {

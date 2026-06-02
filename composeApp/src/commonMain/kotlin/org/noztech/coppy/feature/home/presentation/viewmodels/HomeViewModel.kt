@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import org.noztech.VaultItem
+import org.noztech.EntryItem
 import org.noztech.coppy.feature.home.domain.usecase.DeleteItemUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetGroupsUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetItemsUseCase
@@ -55,7 +55,7 @@ class HomeViewModel(
     }
         .debounce(100) // delay to smooth out last char backspace lag
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-    private fun VaultItem.matches(query: String): Boolean {
+    private fun EntryItem.matches(query: String): Boolean {
         return title.lowercase().contains(query) ||
                 value_.orEmpty().lowercase().contains(query)
     }

@@ -1,35 +1,35 @@
-CREATE TABLE VaultImage (
+CREATE TABLE EntryImage (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    itemId INTEGER NOT NULL REFERENCES VaultItem(id) ON DELETE CASCADE,
+    itemId INTEGER NOT NULL REFERENCES EntryItem(id) ON DELETE CASCADE,
     type TEXT NOT NULL,
     imagePath TEXT NOT NULL,
     createdAt TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 
 insertImage:
-INSERT INTO VaultImage (itemId, type, imagePath)
+INSERT INTO EntryImage (itemId, type, imagePath)
 VALUES (?, ?, ?);
 
 updateImage:
-UPDATE VaultImage
+UPDATE EntryImage
 SET
     type = ?,
     imagePath = ?
 WHERE id = ?;
 
 deleteImageById:
-DELETE FROM VaultImage
+DELETE FROM EntryImage
 WHERE id = ?;
 
 deleteImagesByItemId:
-DELETE FROM VaultImage
+DELETE FROM EntryImage
 WHERE itemId = ?;
 
 getImagesByItemId:
-SELECT * FROM VaultImage
+SELECT * FROM EntryImage
 WHERE itemId = ?
 ORDER BY createdAt ASC;
 
 getImageById:
-SELECT * FROM VaultImage
+SELECT * FROM EntryImage
 WHERE id = ?;

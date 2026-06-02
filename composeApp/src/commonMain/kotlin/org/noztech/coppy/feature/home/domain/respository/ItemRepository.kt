@@ -2,13 +2,17 @@ package org.noztech.coppy.feature.home.domain.respository
 
 import kotlinx.coroutines.flow.Flow
 import org.noztech.GetItemCountByGroup
-import org.noztech.VaultItem
+import org.noztech.EntryItem
 
 interface ItemRepository {
     suspend fun createItem(
         groupId: Long?,
         title: String,
         value: String?,
+        entryType: String,
+        issuer: String?,
+        expiresAt: String?,
+        securityCode: String?,
         hidden: Boolean = false
     ): Long
 
@@ -16,7 +20,11 @@ interface ItemRepository {
         id: Long,
         groupId: Long?,
         title: String,
-        value: String?
+        value: String?,
+        entryType: String,
+        issuer: String?,
+        expiresAt: String?,
+        securityCode: String?,
     )
 
     suspend fun toggleItemVisibility(
@@ -25,9 +33,9 @@ interface ItemRepository {
 
     suspend fun deleteItem(id: Long)
 
-    fun getItems(): Flow<List<VaultItem>>
-    fun getItemById(id: Long): VaultItem?
-    suspend fun getItemsByGroup(groupId: Long): List<VaultItem>
+    fun getItems(): Flow<List<EntryItem>>
+    fun getItemById(id: Long): EntryItem?
+    suspend fun getItemsByGroup(groupId: Long): List<EntryItem>
 
     fun getItemCountByGroup(): Flow<List<GetItemCountByGroup>>
     fun getItemCountForGroup(groupId: Long): Flow<Long>

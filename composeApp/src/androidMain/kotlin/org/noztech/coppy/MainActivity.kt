@@ -14,6 +14,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        MyActivityProvider.activity = this
 
         setContent {
             LaunchedEffect(isSystemInDarkTheme()) {

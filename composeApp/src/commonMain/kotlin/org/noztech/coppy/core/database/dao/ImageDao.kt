@@ -3,10 +3,10 @@ package org.noztech.coppy.core.database.dao
 import app.cash.sqldelight.coroutines.asFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import org.noztech.VaultImage
-import org.noztech.VaultImageQueries
+import org.noztech.EntryImage
+import org.noztech.EntryImageQueries
 
-class ImageDao(private val queries: VaultImageQueries) {
+class ImageDao(private val queries: EntryImageQueries) {
 
     suspend fun insertImage(
         itemId: Long,
@@ -39,7 +39,7 @@ class ImageDao(private val queries: VaultImageQueries) {
         queries.getImageById(id).executeAsOneOrNull()
 
     // Optional reactive flows for live updates
-    fun observeImagesByItemId(itemId: Long): Flow<List<VaultImage>> =
+    fun observeImagesByItemId(itemId: Long): Flow<List<EntryImage>> =
         queries.getImagesByItemId(itemId)
             .asFlow()
             .map { it.executeAsList() }

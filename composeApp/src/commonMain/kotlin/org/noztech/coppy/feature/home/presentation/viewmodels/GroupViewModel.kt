@@ -9,14 +9,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import org.noztech.VaultGroup
+import org.noztech.EntryGroup
 import org.noztech.coppy.feature.home.domain.usecase.CreateGroupUseCase
+import org.noztech.coppy.feature.home.domain.usecase.DeleteGroupUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetGroupsUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetItemCountByGroupUseCase
 import org.noztech.coppy.feature.home.presentation.SaveState
 
 class GroupViewModel(
     private val createGroupUseCase: CreateGroupUseCase,
+    private val deleteGroupUseCase: DeleteGroupUseCase,
     private val getGroupsUseCase: GetGroupsUseCase,
     private val getItemCountByGroupUseCase: GetItemCountByGroupUseCase
 ) : ViewModel() {
@@ -24,7 +26,7 @@ class GroupViewModel(
     private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
     val saveState = _saveState.asStateFlow()
 
-    val groupsWithCount: StateFlow<List<Pair<VaultGroup, Long>>> =
+    val groupsWithCount: StateFlow<List<Pair<EntryGroup, Long>>> =
         combine(
             getGroupsUseCase(),
             getItemCountByGroupUseCase()
@@ -45,7 +47,19 @@ class GroupViewModel(
             _saveState.value = SaveState.Loading
             try {
                 createGroupUseCase(name)
-                _saveState.value = SaveState.Success("Group created")
+                _saveState.value = SaveState.Success("Folder created")
+            } catch (e: Exception) {
+                _saveState.value = SaveState.Error(e.message ?: "Unknown error")
+            }
+        }
+    }
+
+    fun deleteGroup(id: Long) {
+        viewModelScope.launch {
+            _saveState.value = SaveState.Loading
+            try {
+                deleteGroupUseCase(id)
+                _saveState.value = SaveState.Success("Folder deleted")
             } catch (e: Exception) {
                 _saveState.value = SaveState.Error(e.message ?: "Unknown error")
             }

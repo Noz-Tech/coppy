@@ -5,10 +5,10 @@ import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
-import org.noztech.VaultGroup
-import org.noztech.VaultGroupQueries
+import org.noztech.EntryGroup
+import org.noztech.EntryGroupQueries
 
-class GroupDao(private val queries: VaultGroupQueries) {
+class GroupDao(private val queries: EntryGroupQueries) {
     suspend fun insertGroup(name: String) {
         queries.insertGroup(name)
     }
@@ -22,7 +22,7 @@ class GroupDao(private val queries: VaultGroupQueries) {
     }
 
     fun getGroupById(id: Long) = queries.getGroupById(id).executeAsOneOrNull()
-    fun getGroups(): Flow<List<VaultGroup>> =
+    fun getGroups(): Flow<List<EntryGroup>> =
         queries.getGroups()
             .asFlow()
             .mapToList(Dispatchers.IO)

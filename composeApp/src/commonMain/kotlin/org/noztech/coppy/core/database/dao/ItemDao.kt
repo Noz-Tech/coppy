@@ -7,21 +7,29 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import org.noztech.GetItemCountByGroup
-import org.noztech.VaultItem
-import org.noztech.VaultItemQueries
+import org.noztech.EntryItem
+import org.noztech.EntryItemQueries
 
-class ItemDao(private val queries: VaultItemQueries) {
+class ItemDao(private val queries: EntryItemQueries) {
 
     suspend fun insertItem(
         groupId: Long?,
         title: String,
         value: String?,
+        entryType: String,
+        issuer: String?,
+        expiresAt: String?,
+        securityCode: String?,
         hidden: Boolean = false
     ) {
         queries.insertItem(
             groupId,
             title,
             value,
+            entryType,
+            issuer,
+            expiresAt,
+            securityCode,
             if (hidden) 1 else 0
         )
     }
@@ -31,11 +39,19 @@ class ItemDao(private val queries: VaultItemQueries) {
         groupId: Long?,
         title: String,
         value: String?,
+        entryType: String,
+        issuer: String?,
+        expiresAt: String?,
+        securityCode: String?,
     ) {
         queries.updateItem(
             groupId,
             title,
             value,
+            entryType,
+            issuer,
+            expiresAt,
+            securityCode,
             id
         )
     }
@@ -48,7 +64,7 @@ class ItemDao(private val queries: VaultItemQueries) {
         queries.deleteItemsByGroupId(groupId)
     }
 
-    fun getItems(): Flow<List<VaultItem>> =
+    fun getItems(): Flow<List<EntryItem>> =
         queries.getItems()
             .asFlow()
             .mapToList(Dispatchers.IO)

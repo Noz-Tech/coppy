@@ -2,7 +2,7 @@ package org.noztech.coppy.feature.home.data
 
 import kotlinx.coroutines.flow.Flow
 import org.noztech.GetItemCountByGroup
-import org.noztech.VaultItem
+import org.noztech.EntryItem
 import org.noztech.coppy.core.database.dao.ItemDao
 import org.noztech.coppy.feature.home.domain.respository.ItemRepository
 
@@ -14,12 +14,20 @@ class ItemRepositoryImpl(
         groupId: Long?,
         title: String,
         value: String?,
+        entryType: String,
+        issuer: String?,
+        expiresAt: String?,
+        securityCode: String?,
         hidden: Boolean
     ): Long {
         dao.insertItem(
             groupId = groupId,
             title = title,
             value = value,
+            entryType = entryType,
+            issuer = issuer,
+            expiresAt = expiresAt,
+            securityCode = securityCode,
             hidden = hidden
         )
         // If you want the new ID, query for it (SQLDelight doesn’t return IDs directly)
@@ -30,9 +38,13 @@ class ItemRepositoryImpl(
         id: Long,
         groupId: Long?,
         title: String,
-        value: String?
+        value: String?,
+        entryType: String,
+        issuer: String?,
+        expiresAt: String?,
+        securityCode: String?,
     ) {
-        dao.updateItem(id, groupId, title, value)
+        dao.updateItem(id, groupId, title, value, entryType, issuer, expiresAt, securityCode)
     }
 
     override suspend fun toggleItemVisibility(id: Long) {
@@ -43,14 +55,14 @@ class ItemRepositoryImpl(
         dao.deleteItem(id)
     }
 
-    override fun getItems(): Flow<List<VaultItem>> {
+    override fun getItems(): Flow<List<EntryItem>> {
         return dao.getItems()
     }
 
-    override fun getItemById(id: Long): VaultItem? =
+    override fun getItemById(id: Long): EntryItem? =
         dao.getItemById(id)
 
-    override suspend fun getItemsByGroup(groupId: Long): List<VaultItem> =
+    override suspend fun getItemsByGroup(groupId: Long): List<EntryItem> =
         dao.getItemsByGroup(groupId)
 
 
