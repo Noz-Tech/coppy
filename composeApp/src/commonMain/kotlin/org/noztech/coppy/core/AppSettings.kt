@@ -6,6 +6,7 @@ class AppSettings(private val settings: Settings) {
     companion object {
         private const val KEY_IS_FIRST_LAUNCH = "is_first_launch"
         private const val KEY_LOCK_ON_LAUNCH = "lock_on_launch"
+        private const val KEY_BIOMETRIC_PERMISSION_ASKED = "biometric_permission_asked"
         private const val KEY_BIOMETRIC_ON_REVEAL = "biometric_on_reveal"
         private const val KEY_BIOMETRIC_ON_COPY = "biometric_on_copy"
         private const val KEY_BIOMETRIC_ON_SHARE = "biometric_on_share"
@@ -17,6 +18,10 @@ class AppSettings(private val settings: Settings) {
 
     fun setLockOnLaunch(isEnabled: Boolean) {
         settings.putBoolean(KEY_LOCK_ON_LAUNCH, isEnabled)
+    }
+
+    fun setBiometricPermissionAsked() {
+        settings.putBoolean(KEY_BIOMETRIC_PERMISSION_ASKED, true)
     }
 
     fun setBiometricOnReveal(isEnabled: Boolean) {
@@ -37,6 +42,10 @@ class AppSettings(private val settings: Settings) {
 
     fun isLockOnLaunchEnabled(): Boolean {
         return settings.getBoolean(KEY_LOCK_ON_LAUNCH, false)
+    }
+
+    fun isBiometricPermissionAsked(): Boolean {
+        return settings.getBoolean(KEY_BIOMETRIC_PERMISSION_ASKED, false)
     }
 
     fun isBiometricOnRevealEnabled(): Boolean {

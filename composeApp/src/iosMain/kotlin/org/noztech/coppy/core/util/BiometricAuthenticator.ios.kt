@@ -4,6 +4,8 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import platform.LocalAuthentication.LAContext
 import platform.LocalAuthentication.LAErrorUserCancel
 import platform.LocalAuthentication.LAPolicyDeviceOwnerAuthenticationWithBiometrics
+import platform.darwin.dispatch_async
+import platform.darwin.dispatch_get_main_queue
 
 actual class BiometricAuthenticator {
 
@@ -23,12 +25,14 @@ actual class BiometricAuthenticator {
             LAPolicyDeviceOwnerAuthenticationWithBiometrics,
             description.ifBlank { title },
             reply = { success, error ->
-                if (success) {
-                    onResult(BiometricAuthResult.Success)
-                } else {
-                    when (error?.code) {
-                        LAErrorUserCancel -> onResult(BiometricAuthResult.UserCancelled)
-                        else -> onResult(BiometricAuthResult.Error)
+                dispatch_async(dispatch_get_main_queue()) {
+                    if (success) {
+                        onResult(BiometricAuthResult.Success)
+                    } else {
+                        when (error?.code) {
+                            LAErrorUserCancel -> onResult(BiometricAuthResult.UserCancelled)
+                            else -> onResult(BiometricAuthResult.Error)
+                        }
                     }
                 }
             },

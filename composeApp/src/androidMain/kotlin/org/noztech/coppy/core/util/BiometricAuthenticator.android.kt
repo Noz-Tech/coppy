@@ -1,7 +1,5 @@
 package org.noztech.coppy.core.util
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.biometric.BiometricPrompt.ERROR_CANCELED
@@ -10,14 +8,13 @@ import androidx.biometric.BiometricPrompt.ERROR_USER_CANCELED
 import androidx.biometric.BiometricPrompt.ERROR_NO_BIOMETRICS
 import androidx.biometric.BiometricPrompt.ERROR_HW_NOT_PRESENT
 import androidx.biometric.BiometricPrompt.ERROR_HW_UNAVAILABLE
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import org.noztech.coppy.core.MyActivityProvider
 import java.util.concurrent.Executor
 
 actual class BiometricAuthenticator {
-    private val authenticators =
-        BiometricManager.Authenticators.BIOMETRIC_WEAK or
-                BiometricManager.Authenticators.DEVICE_CREDENTIAL
+    private val authenticators = BiometricManager.Authenticators.BIOMETRIC_WEAK
 
     private fun activity(): FragmentActivity? = MyActivityProvider.activity as? FragmentActivity
 
@@ -33,16 +30,16 @@ actual class BiometricAuthenticator {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.P)
     actual fun authenticate(title: String, description: String, onResult: (BiometricAuthResult) -> Unit) {
         val activity = activity() ?: run {
             onResult(BiometricAuthResult.Error)
             return
         }
-        val executor: Executor = activity.mainExecutor
+        val executor: Executor = ContextCompat.getMainExecutor(activity)
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle(title)
             .setDescription(description)
+            .setNegativeButtonText("Cancel")
             .setAllowedAuthenticators(authenticators)
             .build()
 

@@ -33,6 +33,7 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.biometric)
+            implementation(libs.androidx.core.ktx)
             implementation(libs.sqlcipher.android)
 
             implementation(libs.sqldelight.android)
