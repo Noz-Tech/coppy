@@ -3,6 +3,7 @@ package org.noztech.coppy.feature.home.presentation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -41,7 +42,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
@@ -63,6 +67,9 @@ fun GroupScreen(navController: NavController) {
     }
     var showSheet by remember { mutableStateOf(false) }
     val pendingDeletionIds = remember { mutableStateListOf<Long>() }
+    val visibleGroups by remember(groupsWithCount, pendingDeletionIds.size) {
+        derivedStateOf { groupsWithCount.filterNot { pendingDeletionIds.contains(it.first.id) } }
+    }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedFolderId by remember { mutableStateOf<Long?>(null) }
     var selectedFolderName by remember { mutableStateOf("") }
@@ -99,7 +106,13 @@ fun GroupScreen(navController: NavController) {
                 )
             }
 
-            items(groupsWithCount.filterNot { pendingDeletionIds.contains(it.first.id) }) { (group, count) ->
+            if (visibleGroups.isEmpty()) {
+                item {
+                    FolderEmptyState()
+                }
+            }
+
+            items(visibleGroups) { (group, count) ->
                 val dismissState = rememberSwipeToDismissBoxState()
                 val trashScale by animateFloatAsState(
                     targetValue = if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) 1.15f else 0.85f,
@@ -212,6 +225,31 @@ fun GroupScreen(navController: NavController) {
                 selectedFolderId = null
                 selectedFolderName = ""
             }
+        )
+    }
+}
+
+@Composable
+private fun FolderEmptyState() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 28.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(
+            text = "No folders yet",
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 15.sp,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = "Create a folder to organize your saved entries.",
+            fontSize = 13.sp,
+            lineHeight = 18.sp,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

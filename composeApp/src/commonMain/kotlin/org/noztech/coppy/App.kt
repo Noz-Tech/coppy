@@ -9,7 +9,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.getKoin
 import org.noztech.coppy.core.AppSettings
 import org.noztech.coppy.core.ui.theme.AppTheme
@@ -19,7 +18,6 @@ import org.noztech.coppy.core.util.BiometricAuthenticator
 import org.noztech.coppy.navigation.AppNavHost
 
 @Composable
-@Preview
 fun App() {
     val appSettings: AppSettings = getKoin().get()
     val biometricAuthenticator = remember { BiometricAuthenticator() }

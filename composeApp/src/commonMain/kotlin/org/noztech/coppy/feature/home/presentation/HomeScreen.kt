@@ -62,6 +62,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -329,6 +330,23 @@ fun HomeScreen(navController: NavController) {
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
+                if (filteredItems.isEmpty()) {
+                    item {
+                        EmptyState(
+                            title = when {
+                                searchQuery.isNotBlank() -> "No results found"
+                                selectedGroupId != null -> "No entries in this folder"
+                                else -> "No entries yet"
+                            },
+                            message = when {
+                                searchQuery.isNotBlank() -> "Try a different name, value, or folder."
+                                selectedGroupId != null -> "Add an entry to this folder or choose another folder."
+                                else -> "Tap the plus button to save your first item."
+                            }
+                        )
+                    }
+                }
+
                 items(filteredItems, key = { it.id }) { item ->
                     var copied by remember(item.id) { mutableStateOf(false) }
                     var expanded by remember(item.id) { mutableStateOf(false) }
@@ -526,7 +544,7 @@ fun HomeScreen(navController: NavController) {
                     matchesGroup && matchesSearch
                 }
 
-                if (showHiddenItems && filteredHiddenItems.isNotEmpty()) {
+                if (showHiddenItems) {
                     item {
                         Text(
                             text = "Hidden Items",
@@ -536,7 +554,27 @@ fun HomeScreen(navController: NavController) {
                             modifier = Modifier.padding(top = 10.dp, bottom = 2.dp)
                         )
                     }
+                }
 
+                if (showHiddenItems && filteredHiddenItems.isEmpty()) {
+                    item {
+                        EmptyState(
+                            title = when {
+                                searchQuery.isNotBlank() -> "No hidden results"
+                                selectedGroupId != null -> "No hidden entries in this folder"
+                                else -> "No hidden items"
+                            },
+                            message = when {
+                                searchQuery.isNotBlank() -> "Try a different search for hidden entries."
+                                selectedGroupId != null -> "Hidden entries for this folder will appear here."
+                                else -> "Items you hide will appear here when hidden items are enabled."
+                            },
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+
+                if (showHiddenItems && filteredHiddenItems.isNotEmpty()) {
                     items(filteredHiddenItems, key = { "hidden-${it.id}" }) { item ->
                         var copied by remember(item.id) { mutableStateOf(false) }
                         val isSelected = selectedItemId == item.id && selectedItemHidden
@@ -706,6 +744,35 @@ fun HomeScreen(navController: NavController) {
                 selectedItemHidden = false
                 showConfirmDialog = false
             }
+        )
+    }
+}
+
+@Composable
+private fun EmptyState(
+    title: String,
+    message: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 28.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(
+            text = title,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 15.sp,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = message,
+            fontSize = 13.sp,
+            lineHeight = 18.sp,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
