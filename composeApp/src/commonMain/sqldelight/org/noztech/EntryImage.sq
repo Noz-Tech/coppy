@@ -25,6 +25,9 @@ deleteImagesByItemId:
 DELETE FROM EntryImage
 WHERE itemId = ?;
 
+deleteAllImages:
+DELETE FROM EntryImage;
+
 getImagesByItemId:
 SELECT * FROM EntryImage
 WHERE itemId = ?

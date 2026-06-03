@@ -10,6 +10,7 @@ import org.noztech.coppy.core.AppSettings
 import org.noztech.coppy.core.database.DatabaseDriverFactory
 import org.noztech.coppy.core.database.DatabaseHelper
 import org.noztech.coppy.core.database.SampleDataSeeder
+import org.noztech.coppy.core.database.VaultDataResetter
 import org.noztech.coppy.core.database.dao.GroupDao
 import org.noztech.coppy.core.database.dao.ImageDao
 import org.noztech.coppy.core.database.dao.ItemDao
@@ -50,6 +51,7 @@ val appModule = module {
         }
     }
     single<DatabaseHelper> { DatabaseHelper(get()) }
+    single { VaultDataResetter(get()) }
     single { GroupDao(get<AppDatabase>().entryGroupQueries) }
     single { ItemDao(get<AppDatabase>().entryItemQueries) }
     single { ImageDao(get<AppDatabase>().entryImageQueries) }

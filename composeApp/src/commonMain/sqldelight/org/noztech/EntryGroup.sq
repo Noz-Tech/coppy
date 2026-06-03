@@ -17,6 +17,9 @@ deleteGroupById:
 DELETE FROM EntryGroup
 WHERE id = ?;
 
+deleteAllGroups:
+DELETE FROM EntryGroup;
+
 getGroupById:
 SELECT * FROM EntryGroup
 WHERE id = ?;

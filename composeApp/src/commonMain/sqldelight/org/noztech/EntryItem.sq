@@ -45,6 +45,9 @@ deleteItemsByGroupId:
 DELETE FROM EntryItem
 WHERE groupId = ?;
 
+deleteAllItems:
+DELETE FROM EntryItem;
+
 getItems:
 SELECT * FROM EntryItem
 WHERE hidden = 0;

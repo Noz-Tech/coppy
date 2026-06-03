@@ -24,6 +24,10 @@ class AppSettings(private val settings: Settings) {
         settings.putBoolean(KEY_IS_FIRST_LAUNCH, false)
     }
 
+    fun resetFirstLaunch() {
+        settings.putBoolean(KEY_IS_FIRST_LAUNCH, true)
+    }
+
     fun setLockOnLaunch(isEnabled: Boolean) {
         settings.putBoolean(KEY_LOCK_ON_LAUNCH, isEnabled)
     }
@@ -55,6 +59,10 @@ class AppSettings(private val settings: Settings) {
 
     fun setSampleDataSeeded() {
         settings.putBoolean(KEY_SAMPLE_DATA_SEEDED, true)
+    }
+
+    fun resetSampleDataSeeded() {
+        settings.putBoolean(KEY_SAMPLE_DATA_SEEDED, false)
     }
 
     fun isFirstLaunch(): Boolean {
