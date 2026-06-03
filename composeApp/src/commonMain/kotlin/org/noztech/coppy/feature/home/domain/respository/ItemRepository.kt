@@ -35,6 +35,7 @@ interface ItemRepository {
 
     fun getItems(): Flow<List<EntryItem>>
     fun getItemById(id: Long): EntryItem?
+    fun getHiddenItems(): Flow<List<EntryItem>>
     suspend fun getItemsByGroup(groupId: Long): List<EntryItem>
 
     fun getItemCountByGroup(): Flow<List<GetItemCountByGroup>>

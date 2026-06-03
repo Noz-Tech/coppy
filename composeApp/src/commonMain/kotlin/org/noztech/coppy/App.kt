@@ -24,15 +24,21 @@ fun App() {
     val appSettings: AppSettings = getKoin().get()
     val biometricAuthenticator = remember { BiometricAuthenticator() }
     var showBiometricPrompt by remember { mutableStateOf(false) }
+    var welcomeCompleted by remember { mutableStateOf(!appSettings.isFirstLaunch()) }
 
-    LaunchedEffect(Unit) {
-        showBiometricPrompt = !appSettings.isFirstLaunch() &&
+    LaunchedEffect(welcomeCompleted) {
+        showBiometricPrompt = welcomeCompleted &&
                 !appSettings.isBiometricPermissionAsked() &&
                 biometricAuthenticator.canAuthenticate() == BiometricAuthStatus.AVAILABLE
     }
 
     AppTheme {
-        AppNavHost(appSettings = appSettings)
+        AppNavHost(
+            appSettings = appSettings,
+            onWelcomeCompleted = {
+                welcomeCompleted = true
+            },
+        )
 
         if (showBiometricPrompt) {
             AlertDialog(

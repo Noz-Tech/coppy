@@ -97,6 +97,8 @@ fun HomeScreen(navController: NavController) {
     val biometricAuthenticator = remember { BiometricAuthenticator() }
     val groups by viewModel.groups.collectAsState()
     val filteredItems by viewModel.filteredItems.collectAsState()
+    val hiddenItems by viewModel.hiddenItems.collectAsState()
+    val showHiddenItems by appSettings.showHiddenItems.collectAsState()
     val selectedGroupId by viewModel.selectedGroupId.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
@@ -104,6 +106,7 @@ fun HomeScreen(navController: NavController) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedItemId by remember { mutableStateOf<Long?>(null) }
     var selectedItemTitle by remember { mutableStateOf<String?>(null) }
+    var selectedItemHidden by remember { mutableStateOf(false) }
 
     var showConfirmDialog by remember { mutableStateOf(false) }
     var confirmActionType by remember { mutableStateOf<ConfirmActionType?>(null) }
@@ -148,7 +151,12 @@ fun HomeScreen(navController: NavController) {
             AppTopBar(
                 navController = navController,
                 selectedItemId = selectedItemId,
-                onCancelSelection = { selectedItemId = null },
+                selectedItemHidden = selectedItemHidden,
+                onCancelSelection = {
+                    selectedItemId = null
+                    selectedItemTitle = null
+                    selectedItemHidden = false
+                },
                 onEdit = { id ->
                     navController.navigate(AuthRoutes.CreateList(selectedItemId))
                 },
@@ -165,25 +173,20 @@ fun HomeScreen(navController: NavController) {
             )
         },
         floatingActionButton = {
-            Box(
-                modifier = Modifier
-                    .padding(end = 24.dp, bottom = 32.dp)
+            FloatingActionButton(
+                onClick = {
+                    navController.navigate(AuthRoutes.CreateList())
+                },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                shape = CircleShape,
+                modifier = Modifier.size(64.dp)
             ) {
-                FloatingActionButton(
-                    onClick = {
-                        navController.navigate(AuthRoutes.CreateList())
-                    },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    shape = CircleShape,
-                    modifier = Modifier.size(64.dp)
-                ) {
-                    Icon(
-                        imageVector = Lucide.Plus,
-                        contentDescription = "Add",
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
+                Icon(
+                    imageVector = Lucide.Plus,
+                    contentDescription = "Add",
+                    modifier = Modifier.size(28.dp)
+                )
             }
         },
         floatingActionButtonPosition = FabPosition.End,
@@ -335,6 +338,7 @@ fun HomeScreen(navController: NavController) {
                                         // if already in selection mode, toggle
                                         selectedItemId = if (isSelected) null else item.id
                                         selectedItemTitle = if (isSelected) null else item.title
+                                        selectedItemHidden = false
                                     } else {
                                         navController.navigate(AuthRoutes.EntryDetail(item.id))
                                     }
@@ -342,6 +346,7 @@ fun HomeScreen(navController: NavController) {
                                 onLongClick = {
                                     selectedItemId = item.id
                                     selectedItemTitle = item.title
+                                    selectedItemHidden = false
                                 }
                             )
                     ) {
@@ -498,6 +503,159 @@ fun HomeScreen(navController: NavController) {
                         }
                     }
                 }
+
+                val filteredHiddenItems = hiddenItems.filter { item ->
+                    val matchesGroup = selectedGroupId == null || item.groupId == selectedGroupId
+                    val query = searchQuery.trim().lowercase()
+                    val matchesSearch = query.isBlank() ||
+                        item.title.lowercase().contains(query) ||
+                        item.value_.orEmpty().lowercase().contains(query)
+
+                    matchesGroup && matchesSearch
+                }
+
+                if (showHiddenItems && filteredHiddenItems.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "Hidden Items",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 10.dp, bottom = 2.dp)
+                        )
+                    }
+
+                    items(filteredHiddenItems, key = { "hidden-${it.id}" }) { item ->
+                        var copied by remember(item.id) { mutableStateOf(false) }
+                        val isSelected = selectedItemId == item.id && selectedItemHidden
+
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isSelected)
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else
+                                    MaterialTheme.colorScheme.surface
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .combinedClickable(
+                                    onClick = {
+                                        if (selectedItemId != null) {
+                                            selectedItemId = if (isSelected) null else item.id
+                                            selectedItemTitle = if (isSelected) null else item.title
+                                            selectedItemHidden = !isSelected
+                                        } else {
+                                            navController.navigate(AuthRoutes.EntryDetail(item.id))
+                                        }
+                                    },
+                                    onLongClick = {
+                                        selectedItemId = item.id
+                                        selectedItemTitle = item.title
+                                        selectedItemHidden = true
+                                    }
+                                )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Lucide.EyeOff,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(Modifier.width(12.dp))
+                                    Column(verticalArrangement = Arrangement.spacedBy((-5).dp)) {
+                                        Text(
+                                            text = item.title.uppercase(),
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 12.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        MaskableText(secretValue = item.value_.toString().uppercase())
+                                        Text(
+                                            text = item.entryType.toEntryTypeDisplayName(),
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 11.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                                        )
+                                    }
+                                }
+
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy((-8).dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.wrapContentWidth()
+                                ) {
+                                    IconButton(
+                                        onClick = {
+                                            runBiometricGuard(
+                                                enabled = appSettings.isBiometricOnCopyEnabled(),
+                                                title = "Copy protected data",
+                                                description = "Authenticate to copy this value"
+                                            ) {
+                                                CopyToClipboard(
+                                                    "${item.title.uppercase()}: ${
+                                                        item.value_?.uppercase().orEmpty()
+                                                    }"
+                                                )
+                                                copied = true
+                                                coroutineScope.launch {
+                                                    delay(3000)
+                                                    copied = false
+                                                }
+                                            }
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = if (copied) Lucide.CopyCheck else Lucide.Copy,
+                                            contentDescription = if (copied) "Copied" else "Copy",
+                                            tint = if (copied)
+                                                MaterialTheme.colorScheme.primary
+                                            else
+                                                MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+
+                                    IconButton(
+                                        onClick = {
+                                            runBiometricGuard(
+                                                enabled = appSettings.isBiometricOnShareEnabled(),
+                                                title = "Share protected data",
+                                                description = "Authenticate to share this value"
+                                            ) {
+                                                val shareText = buildString {
+                                                    appendLine("From Coppy App:")
+                                                    appendLine(
+                                                        "${item.title.uppercase()}: ${
+                                                            item.value_?.uppercase().orEmpty()
+                                                        }"
+                                                    )
+                                                }
+                                                ShareText(shareText)
+                                            }
+                                        },
+                                    ) {
+                                        Icon(
+                                            imageVector = Lucide.Share2,
+                                            contentDescription = "Share",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -505,12 +663,16 @@ fun HomeScreen(navController: NavController) {
             showDialog = showConfirmDialog,
             onDismiss = { showConfirmDialog = false },
             title = when (confirmActionType) {
-                ConfirmActionType.HIDE -> "Hide Item?"
+                ConfirmActionType.HIDE -> if (selectedItemHidden) "Unhide Item?" else "Hide Item?"
                 ConfirmActionType.DELETE -> "Delete Item?"
                 else -> ""
             },
             message = when (confirmActionType) {
-                ConfirmActionType.HIDE -> "Are you sure you want to hide this item? You can unhide it later."
+                ConfirmActionType.HIDE -> if (selectedItemHidden) {
+                    "Are you sure you want to show this item in your normal list again?"
+                } else {
+                    "Are you sure you want to hide this item? You can unhide it later."
+                }
                 ConfirmActionType.DELETE -> "Are you sure you want to delete this item? This action cannot be undone."
                 else -> ""
             },
@@ -519,12 +681,17 @@ fun HomeScreen(navController: NavController) {
             onConfirm = {
                 selectedItemId?.let { id ->
                     when (confirmActionType) {
-                        ConfirmActionType.HIDE -> viewModel.hideItem(id)
+                        ConfirmActionType.HIDE -> {
+                            if (selectedItemHidden) viewModel.unhideItem(id)
+                            else viewModel.hideItem(id)
+                        }
                         ConfirmActionType.DELETE -> viewModel.deleteItem(id)
                         else -> {}
                     }
                 }
                 selectedItemId = null
+                selectedItemTitle = null
+                selectedItemHidden = false
                 showConfirmDialog = false
             }
         )

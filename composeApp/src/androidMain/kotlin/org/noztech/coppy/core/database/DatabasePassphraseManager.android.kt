@@ -9,6 +9,7 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+import java.security.GeneralSecurityException
 
 internal object DatabasePassphraseManager {
     private const val KEYSTORE_PROVIDER = "AndroidKeyStore"
@@ -17,17 +18,28 @@ internal object DatabasePassphraseManager {
     private const val PREF_ENCRYPTED_PASSPHRASE = "encrypted_db_passphrase"
     private const val PREF_IV = "encrypted_db_passphrase_iv"
 
-    fun getOrCreate(context: Context): ByteArray {
+    fun getOrCreate(
+        context: Context,
+        onPassphraseReset: () -> Unit = {}
+    ): ByteArray {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val encrypted = prefs.getString(PREF_ENCRYPTED_PASSPHRASE, null)
         val iv = prefs.getString(PREF_IV, null)
 
         if (encrypted != null && iv != null) {
-            return decrypt(
-                encrypted = Base64.decode(encrypted, Base64.DEFAULT),
-                iv = Base64.decode(iv, Base64.DEFAULT),
-                key = getOrCreateSecretKey()
-            )
+            try {
+                return decrypt(
+                    encrypted = Base64.decode(encrypted, Base64.DEFAULT),
+                    iv = Base64.decode(iv, Base64.DEFAULT),
+                    key = getOrCreateSecretKey()
+                )
+            } catch (_: GeneralSecurityException) {
+                resetStoredPassphrase(context)
+                onPassphraseReset()
+            } catch (_: IllegalArgumentException) {
+                resetStoredPassphrase(context)
+                onPassphraseReset()
+            }
         }
 
         val passphrase = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
@@ -37,6 +49,21 @@ internal object DatabasePassphraseManager {
             .putString(PREF_IV, Base64.encodeToString(encryption.second, Base64.NO_WRAP))
             .apply()
         return passphrase
+    }
+
+    private fun resetStoredPassphrase(context: Context) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .remove(PREF_ENCRYPTED_PASSPHRASE)
+            .remove(PREF_IV)
+            .apply()
+
+        KeyStore.getInstance(KEYSTORE_PROVIDER).apply {
+            load(null)
+            if (containsAlias(KEY_ALIAS)) {
+                deleteEntry(KEY_ALIAS)
+            }
+        }
     }
 
     private fun getOrCreateSecretKey(): SecretKey {

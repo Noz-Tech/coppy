@@ -9,6 +9,7 @@ import org.noztech.AppDatabase
 import org.noztech.coppy.core.AppSettings
 import org.noztech.coppy.core.database.DatabaseDriverFactory
 import org.noztech.coppy.core.database.DatabaseHelper
+import org.noztech.coppy.core.database.SampleDataSeeder
 import org.noztech.coppy.core.database.dao.GroupDao
 import org.noztech.coppy.core.database.dao.ImageDao
 import org.noztech.coppy.core.database.dao.ItemDao
@@ -19,6 +20,7 @@ import org.noztech.coppy.feature.home.domain.usecase.CreateGroupUseCase
 import org.noztech.coppy.feature.home.domain.usecase.CreateItemUseCase
 import org.noztech.coppy.feature.home.domain.usecase.DeleteGroupUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetGroupsUseCase
+import org.noztech.coppy.feature.home.domain.usecase.GetHiddenItemsUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetItemCountByGroupUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetItemCountForGroupUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetItemsUseCase
@@ -39,7 +41,14 @@ val appModule = module {
     single { Settings() }
     single { AppSettings(get()) }
     // single<FirebaseManager> { PlatformFirebaseManager }
-    single { AppDatabase(get<DatabaseDriverFactory>().createDriver()) }
+    single {
+        AppDatabase(get<DatabaseDriverFactory>().createDriver()).also { database ->
+            SampleDataSeeder(
+                database = database,
+                appSettings = get()
+            ).seedIfNeeded()
+        }
+    }
     single<DatabaseHelper> { DatabaseHelper(get()) }
     single { GroupDao(get<AppDatabase>().entryGroupQueries) }
     single { ItemDao(get<AppDatabase>().entryItemQueries) }
@@ -51,6 +60,7 @@ val appModule = module {
     single { CreateGroupUseCase(get()) }
     single { DeleteGroupUseCase(get()) }
     single { GetGroupsUseCase(get()) }
+    single { GetHiddenItemsUseCase(get()) }
     single { GetItemByIdUseCase(get()) }
     single { GetItemCountByGroupUseCase(get()) }
     single { GetItemCountForGroupUseCase(get()) }
@@ -61,7 +71,7 @@ val appModule = module {
     single { DeleteItemUseCase(get()) }
 
     viewModel { WelcomeViewModel(get()) }
-    viewModel { HomeViewModel(get(), get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get(), get()) }
     viewModel { GroupViewModel(get(), get(), get(), get()) }
     viewModel { CreateListViewModel(get(), get(), get(), get()) }
     viewModel { EntryDetailViewModel(get(), get()) }

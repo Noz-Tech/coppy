@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.composables.icons.lucide.Bolt
+import com.composables.icons.lucide.Eye
 import com.composables.icons.lucide.EyeOff
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pen
@@ -41,6 +42,7 @@ fun AppTopBar(
     navController: NavController,
     selectedItemId: Long?,
     selectedItemTitle: String?,
+    selectedItemHidden: Boolean = false,
     onCancelSelection: () -> Unit,
     onEdit: (Long) -> Unit,
     onDelete: (Long) -> Unit,
@@ -90,8 +92,8 @@ fun AppTopBar(
                 }
                 IconButton(onClick = { onHide(selectedItemId) }) {
                     Icon(
-                        imageVector = Lucide.EyeOff,
-                        contentDescription = "Hide",
+                        imageVector = if (selectedItemHidden) Lucide.Eye else Lucide.EyeOff,
+                        contentDescription = if (selectedItemHidden) "Unhide" else "Hide",
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -107,7 +109,7 @@ fun AppTopBar(
                     Image(
                         painter = painterResource(Res.drawable.logo),
                         contentDescription = "Logo",
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(38.dp)
                     )
                 }
             },
@@ -134,7 +136,7 @@ fun AppTopBar(
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = backgroundColor,
             ),
-            title = {Text("Coppy", fontSize = 20.sp, fontWeight = FontWeight.Medium)}
+            title = {Text("", fontSize = 18.sp, fontWeight = FontWeight.Medium)}
         )
     }
 }

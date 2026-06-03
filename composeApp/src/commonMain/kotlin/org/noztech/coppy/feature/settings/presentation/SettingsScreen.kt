@@ -31,6 +31,8 @@ import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Lucide
 import org.koin.compose.getKoin
 import org.noztech.coppy.core.AppSettings
+import org.noztech.coppy.core.util.BiometricAuthResult
+import org.noztech.coppy.core.util.BiometricAuthenticator
 
 @Composable
 fun SettingsScreen(navController: NavController) {
@@ -40,6 +42,33 @@ fun SettingsScreen(navController: NavController) {
     var biometricOnReveal by remember { mutableStateOf(appSettings.isBiometricOnRevealEnabled()) }
     var biometricOnCopy by remember { mutableStateOf(appSettings.isBiometricOnCopyEnabled()) }
     var biometricOnShare by remember { mutableStateOf(appSettings.isBiometricOnShareEnabled()) }
+    var biometricOnHiddenItems by remember { mutableStateOf(appSettings.isBiometricOnHiddenItemsEnabled()) }
+    var showHiddenItems by remember { mutableStateOf(appSettings.isShowHiddenItemsEnabled()) }
+    val biometricAuthenticator = remember { BiometricAuthenticator() }
+
+    fun setShowHiddenItemsWithGuard(isEnabled: Boolean) {
+        if (!isEnabled) {
+            showHiddenItems = false
+            appSettings.setShowHiddenItems(false)
+            return
+        }
+
+        if (!appSettings.isBiometricOnHiddenItemsEnabled()) {
+            showHiddenItems = true
+            appSettings.setShowHiddenItems(true)
+            return
+        }
+
+        biometricAuthenticator.authenticate(
+            title = "Show hidden items",
+            description = "Authenticate to show hidden entries on Home"
+        ) { result ->
+            if (result == BiometricAuthResult.Success) {
+                showHiddenItems = true
+                appSettings.setShowHiddenItems(true)
+            }
+        }
+    }
 
     Scaffold(
         topBar = { SettingsTopBar(navController) },
@@ -95,6 +124,27 @@ fun SettingsScreen(navController: NavController) {
                     biometricOnShare = it
                     appSettings.setBiometricOnShare(it)
                 }
+            )
+
+            SettingRow(
+                title = "Require biometric for hidden items",
+                description = "Authenticate before showing hidden items",
+                checked = biometricOnHiddenItems,
+                onCheckedChange = {
+                    biometricOnHiddenItems = it
+                    appSettings.setBiometricOnHiddenItems(it)
+                }
+            )
+            Text(
+                text = "Other",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+            )
+
+            SettingRow(
+                title = "Unhide hidden items",
+                description = "Show hidden entries below your regular items",
+                checked = showHiddenItems,
+                onCheckedChange = ::setShowHiddenItemsWithGuard
             )
         }
     }

@@ -13,12 +13,14 @@ import kotlinx.coroutines.launch
 import org.noztech.EntryItem
 import org.noztech.coppy.feature.home.domain.usecase.DeleteItemUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetGroupsUseCase
+import org.noztech.coppy.feature.home.domain.usecase.GetHiddenItemsUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetItemsUseCase
 import org.noztech.coppy.feature.home.domain.usecase.ToggleItemVisibilityUseCase
 
 class HomeViewModel(
     private val getGroupsUseCase: GetGroupsUseCase,
     private val getItemsUseCase: GetItemsUseCase,
+    private val getHiddenItemsUseCase: GetHiddenItemsUseCase,
     private val toggleItemVisibilityUseCase: ToggleItemVisibilityUseCase,
     private val deleteItemUseCase: DeleteItemUseCase,
 ) : ViewModel() {
@@ -33,6 +35,9 @@ class HomeViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val items = getItemsUseCase()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val hiddenItems = getHiddenItemsUseCase()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     @OptIn(FlowPreview::class)
@@ -75,6 +80,10 @@ class HomeViewModel(
                 println("Failed to update visibility for item $id: ${e.message}")
             }
         }
+    }
+
+    fun unhideItem(id: Long) {
+        hideItem(id)
     }
 
     fun deleteItem(id: Long) {

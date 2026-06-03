@@ -30,7 +30,10 @@ actual class DatabaseDriverFactory(private val context: Context) {
     actual fun createDriver(): SqlDriver {
         ensureSqlCipherLoaded()
         resetLegacyPlaintextDbIfNeeded()
-        val passphrase = DatabasePassphraseManager.getOrCreate(context)
+        val passphrase = DatabasePassphraseManager.getOrCreate(
+            context = context,
+            onPassphraseReset = ::deleteDatabaseFiles
+        )
         return AndroidSqliteDriver(
             schema = AppDatabase.Schema,
             context = context,
@@ -43,6 +46,11 @@ actual class DatabaseDriverFactory(private val context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         if (prefs.getBoolean(PREF_SQLCIPHER_BOOTSTRAPPED, false)) return
 
+        deleteDatabaseFiles()
+        prefs.edit().putBoolean(PREF_SQLCIPHER_BOOTSTRAPPED, true).apply()
+    }
+
+    private fun deleteDatabaseFiles() {
         context.deleteDatabase(DB_NAME)
         val dbDir = context.getDatabasePath(DB_NAME).parentFile
         if (dbDir != null) {
@@ -51,6 +59,5 @@ actual class DatabaseDriverFactory(private val context: Context) {
                     File(dbDir, suffix).delete()
                 }
         }
-        prefs.edit().putBoolean(PREF_SQLCIPHER_BOOTSTRAPPED, true).apply()
     }
 }

@@ -1,6 +1,8 @@
 package org.noztech.coppy.core
 
 import com.russhwolf.settings.Settings
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class AppSettings(private val settings: Settings) {
     companion object {
@@ -10,7 +12,13 @@ class AppSettings(private val settings: Settings) {
         private const val KEY_BIOMETRIC_ON_REVEAL = "biometric_on_reveal"
         private const val KEY_BIOMETRIC_ON_COPY = "biometric_on_copy"
         private const val KEY_BIOMETRIC_ON_SHARE = "biometric_on_share"
+        private const val KEY_BIOMETRIC_ON_HIDDEN_ITEMS = "biometric_on_hidden_items"
+        private const val KEY_SHOW_HIDDEN_ITEMS = "show_hidden_items"
+        private const val KEY_SAMPLE_DATA_SEEDED = "sample_data_seeded"
     }
+
+    private val _showHiddenItems = MutableStateFlow(settings.getBoolean(KEY_SHOW_HIDDEN_ITEMS, false))
+    val showHiddenItems = _showHiddenItems.asStateFlow()
 
     fun setFirstLaunch() {
         settings.putBoolean(KEY_IS_FIRST_LAUNCH, false)
@@ -36,6 +44,19 @@ class AppSettings(private val settings: Settings) {
         settings.putBoolean(KEY_BIOMETRIC_ON_SHARE, isEnabled)
     }
 
+    fun setBiometricOnHiddenItems(isEnabled: Boolean) {
+        settings.putBoolean(KEY_BIOMETRIC_ON_HIDDEN_ITEMS, isEnabled)
+    }
+
+    fun setShowHiddenItems(isEnabled: Boolean) {
+        settings.putBoolean(KEY_SHOW_HIDDEN_ITEMS, isEnabled)
+        _showHiddenItems.value = isEnabled
+    }
+
+    fun setSampleDataSeeded() {
+        settings.putBoolean(KEY_SAMPLE_DATA_SEEDED, true)
+    }
+
     fun isFirstLaunch(): Boolean {
         return settings.getBoolean(KEY_IS_FIRST_LAUNCH, true)
     }
@@ -58,5 +79,17 @@ class AppSettings(private val settings: Settings) {
 
     fun isBiometricOnShareEnabled(): Boolean {
         return settings.getBoolean(KEY_BIOMETRIC_ON_SHARE, false)
+    }
+
+    fun isBiometricOnHiddenItemsEnabled(): Boolean {
+        return settings.getBoolean(KEY_BIOMETRIC_ON_HIDDEN_ITEMS, true)
+    }
+
+    fun isShowHiddenItemsEnabled(): Boolean {
+        return settings.getBoolean(KEY_SHOW_HIDDEN_ITEMS, false)
+    }
+
+    fun isSampleDataSeeded(): Boolean {
+        return settings.getBoolean(KEY_SAMPLE_DATA_SEEDED, false)
     }
 }

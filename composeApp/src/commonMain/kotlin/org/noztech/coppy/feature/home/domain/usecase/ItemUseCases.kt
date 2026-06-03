@@ -72,6 +72,13 @@ class GetItemByIdUseCase(
     }
 }
 
+class GetHiddenItemsUseCase(
+    private val repository: ItemRepository
+) {
+    operator fun invoke(): Flow<List<EntryItem>> =
+        repository.getHiddenItems()
+}
+
 class GetItemCountByGroupUseCase(
     private val repository: ItemRepository
 ) {

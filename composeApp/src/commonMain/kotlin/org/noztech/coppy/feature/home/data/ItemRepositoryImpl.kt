@@ -62,6 +62,9 @@ class ItemRepositoryImpl(
     override fun getItemById(id: Long): EntryItem? =
         dao.getItemById(id)
 
+    override fun getHiddenItems(): Flow<List<EntryItem>> =
+        dao.getHiddenItemsFlow()
+
     override suspend fun getItemsByGroup(groupId: Long): List<EntryItem> =
         dao.getItemsByGroup(groupId)
 

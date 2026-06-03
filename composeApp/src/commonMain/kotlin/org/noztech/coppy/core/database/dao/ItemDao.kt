@@ -78,6 +78,11 @@ class ItemDao(private val queries: EntryItemQueries) {
     fun getHiddenItems() =
         queries.getHiddenItems().executeAsList()
 
+    fun getHiddenItemsFlow(): Flow<List<EntryItem>> =
+        queries.getHiddenItems()
+            .asFlow()
+            .mapToList(Dispatchers.IO)
+
     suspend fun toggleVisibility(id: Long) {
         queries.updateItemVisibility(id)
     }

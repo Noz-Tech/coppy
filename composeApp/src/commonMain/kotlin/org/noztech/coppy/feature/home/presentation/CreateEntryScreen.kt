@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -18,7 +19,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,6 +37,7 @@ import androidx.navigation.NavController
 import org.koin.compose.viewmodel.koinViewModel
 import org.noztech.coppy.feature.home.presentation.composables.CreateListTopBar
 import org.noztech.coppy.feature.home.presentation.viewmodels.CreateListViewModel
+import org.noztech.coppy.navigation.AuthRoutes
 
 private enum class EntryType(val value: String, val displayName: String) {
     IdCard("ID_CARD", "ID Card"),
@@ -69,11 +70,11 @@ fun CreateListScreen(
     LaunchedEffect(saveState) {
         when (saveState) {
             is SaveState.Success -> {
-                val result = snackbarHostState.showSnackbar(
-                    message = if (existingItem == null) "New entry created." else "Entry updated.",
-                    withDismissAction = true
-                )
-                if (result == SnackbarResult.Dismissed) navController.popBackStack()
+                navController.navigate(AuthRoutes.Home) {
+                    popUpTo(AuthRoutes.Home) {
+                        inclusive = true
+                    }
+                }
             }
 
             is SaveState.Error -> snackbarHostState.showSnackbar((saveState as SaveState.Error).error)
@@ -176,7 +177,13 @@ fun CreateListScreen(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(if (entryType == EntryType.Custom) 100.dp else 56.dp)
+                        .then(
+                            if (entryType == EntryType.Custom) {
+                                Modifier.height(100.dp)
+                            } else {
+                                Modifier.heightIn(min = 64.dp)
+                            }
+                        )
                 )
 
                 if (entryType == EntryType.Policy || entryType == EntryType.IdCard) {

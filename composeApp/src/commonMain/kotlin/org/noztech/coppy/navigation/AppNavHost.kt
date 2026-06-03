@@ -18,7 +18,8 @@ import org.noztech.coppy.feature.welcome.presentation.WelcomeScreen
 @Composable
 fun AppNavHost(
     navController: NavHostController = rememberNavController(),
-    appSettings: AppSettings
+    appSettings: AppSettings,
+    onWelcomeCompleted: () -> Unit = {},
 ) {
 
     NavHost(
@@ -29,7 +30,12 @@ fun AppNavHost(
             else -> AuthRoutes.Home
         }
     ) {
-        composable<GuestRoutes.Welcome> { WelcomeScreen(navController) }
+        composable<GuestRoutes.Welcome> {
+            WelcomeScreen(
+                navController = navController,
+                onWelcomeCompleted = onWelcomeCompleted,
+            )
+        }
         composable<GuestRoutes.Auth> { AuthScreen(navController, appSettings) }
 
         composable<AuthRoutes.Home> { HomeScreen(navController) }
