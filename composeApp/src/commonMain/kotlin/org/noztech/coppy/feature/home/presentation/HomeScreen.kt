@@ -78,6 +78,7 @@ import com.composables.icons.lucide.Search
 import com.composables.icons.lucide.Share2
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.noztech.EntryField
 import org.koin.compose.viewmodel.koinViewModel
 import org.noztech.coppy.common.ConfirmActionType
 import org.noztech.coppy.core.AppSettings
@@ -112,6 +113,13 @@ fun HomeScreen(navController: NavController) {
 
     var showConfirmDialog by remember { mutableStateOf(false) }
     var confirmActionType by remember { mutableStateOf<ConfirmActionType?>(null) }
+
+    fun folderLabelFor(groupId: Long?): String {
+        return groups.firstOrNull { it.id == groupId }
+            ?.name
+            ?.toFolderDisplayName()
+            ?: "No Folder"
+    }
 
     fun runBiometricGuard(
         enabled: Boolean,
@@ -349,8 +357,10 @@ fun HomeScreen(navController: NavController) {
 
                 items(filteredItems, key = { it.id }) { item ->
                     var copied by remember(item.id) { mutableStateOf(false) }
-                    var expanded by remember(item.id) { mutableStateOf(false) }
                     val isSelected = selectedItemId == item.id
+                    val entryFields = viewModel.getEntryFields(item.id)
+                    val primaryValue = entryFields.firstOrNull()?.value_.orEmpty()
+                    val copyText = buildEntryText(item.title, entryFields)
 
                     Card(
                         shape = RoundedCornerShape(16.dp),
@@ -402,9 +412,9 @@ fun HomeScreen(navController: NavController) {
                                         fontSize = 12.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
-                                    MaskableText(secretValue = item.value_.toString().uppercase())
+                                    MaskableText(secretValue = primaryValue.uppercase())
                                     Text(
-                                        text = item.entryType.toEntryTypeDisplayName(),
+                                        text = folderLabelFor(item.groupId),
                                         fontWeight = FontWeight.Medium,
                                         fontSize = 11.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
@@ -424,11 +434,7 @@ fun HomeScreen(navController: NavController) {
                                             title = "Copy protected data",
                                             description = "Authenticate to copy this value"
                                         ) {
-                                            CopyToClipboard(
-                                                "${item.title.uppercase()}: ${
-                                                    item.value_?.uppercase().orEmpty()
-                                                }"
-                                            )
+                                            CopyToClipboard(copyText)
                                             copied = true
                                             coroutineScope.launch {
                                                 delay(3000)
@@ -455,14 +461,7 @@ fun HomeScreen(navController: NavController) {
                                             title = "Share protected data",
                                             description = "Authenticate to share this value"
                                         ) {
-                                            val shareText = buildString {
-                                                appendLine("From Coppy App:")
-                                                appendLine(
-                                                    "${item.title.uppercase()}: ${
-                                                        item.value_?.uppercase().orEmpty()
-                                                    }"
-                                                )
-                                            }
+                                            val shareText = "From Coppy App:\n$copyText"
                                             ShareText(shareText)
                                         }
                                     },
@@ -474,72 +473,21 @@ fun HomeScreen(navController: NavController) {
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
-// Preparation for more action
-//                                Box {
-//                                    IconButton(onClick = { expanded = true }) {
-//                                        Icon(
-//                                            imageVector = Lucide.EllipsisVertical,
-//                                            contentDescription = "More",
-//                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-//                                            modifier = Modifier.size(20.dp)
-//                                        )
-//                                    }
-//
-//                                    DropdownMenu(
-//                                        expanded = expanded,
-//                                        onDismissRequest = { expanded = false },
-//                                        modifier = Modifier.background(MaterialTheme.colorScheme.surface)
-//                                    ) {
-//
-//                                        DropdownMenuItem(
-//                                            text = { Text("Share") },
-//                                            onClick = {
-//                                                expanded = false
-//                                                val shareText = buildString {
-//                                                    appendLine("From HeroVault:")
-//                                                    appendLine("${item.title.uppercase()}: ${item.value_?.uppercase().orEmpty()}")
-//                                                    appendLine()
-//                                                    append("🔐 Get HeroVault here: herovault.noztech.com")
-//                                                }
-//                                                ShareText(shareText)
-//                                            },
-//                                            leadingIcon = {
-//                                                Icon(
-//                                                    imageVector = Lucide.Share2,
-//                                                    contentDescription = null,
-//                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-//                                                    modifier = Modifier.size(18.dp)
-//                                                )
-//                                            }
-//                                        )
-//
-//                                        DropdownMenuItem(
-//                                            text = { Text("Download") },
-//                                            onClick = {
-//                                                expanded = false
-//                                            },
-//                                            leadingIcon = {
-//                                                Icon(
-//                                                    imageVector = Lucide.ImageDown,
-//                                                    contentDescription = null,
-//                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-//                                                    modifier = Modifier.size(18.dp)
-//                                                )
-//                                            }
-//                                        )
-//                                    }
-//                                }
                             }
                         }
                     }
                 }
 
-                val filteredHiddenItems = hiddenItems.filter { item ->
+	                val filteredHiddenItems = hiddenItems.filter { item ->
                     val matchesGroup = selectedGroupId == null || item.groupId == selectedGroupId
                     val query = searchQuery.trim().lowercase()
+                    val fields = viewModel.getEntryFields(item.id)
                     val matchesSearch = query.isBlank() ||
                         item.title.lowercase().contains(query) ||
-                        item.value_.orEmpty().lowercase().contains(query)
+                        fields.any { field ->
+                            field.label.lowercase().contains(query) ||
+                                field.value_.lowercase().contains(query)
+                        }
 
                     matchesGroup && matchesSearch
                 }
@@ -578,6 +526,9 @@ fun HomeScreen(navController: NavController) {
                     items(filteredHiddenItems, key = { "hidden-${it.id}" }) { item ->
                         var copied by remember(item.id) { mutableStateOf(false) }
                         val isSelected = selectedItemId == item.id && selectedItemHidden
+                        val entryFields = viewModel.getEntryFields(item.id)
+                        val primaryValue = entryFields.firstOrNull()?.value_.orEmpty()
+                        val copyText = buildEntryText(item.title, entryFields)
 
                         Card(
                             shape = RoundedCornerShape(16.dp),
@@ -628,9 +579,9 @@ fun HomeScreen(navController: NavController) {
                                             fontSize = 12.sp,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
-                                        MaskableText(secretValue = item.value_.toString().uppercase())
+                                        MaskableText(secretValue = primaryValue.uppercase())
                                         Text(
-                                            text = item.entryType.toEntryTypeDisplayName(),
+                                            text = folderLabelFor(item.groupId),
                                             fontWeight = FontWeight.Medium,
                                             fontSize = 11.sp,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
@@ -650,11 +601,7 @@ fun HomeScreen(navController: NavController) {
                                                 title = "Copy protected data",
                                                 description = "Authenticate to copy this value"
                                             ) {
-                                                CopyToClipboard(
-                                                    "${item.title.uppercase()}: ${
-                                                        item.value_?.uppercase().orEmpty()
-                                                    }"
-                                                )
+                                                CopyToClipboard(copyText)
                                                 copied = true
                                                 coroutineScope.launch {
                                                     delay(3000)
@@ -681,14 +628,7 @@ fun HomeScreen(navController: NavController) {
                                                 title = "Share protected data",
                                                 description = "Authenticate to share this value"
                                             ) {
-                                                val shareText = buildString {
-                                                    appendLine("From Coppy App:")
-                                                    appendLine(
-                                                        "${item.title.uppercase()}: ${
-                                                            item.value_?.uppercase().orEmpty()
-                                                        }"
-                                                    )
-                                                }
+                                                val shareText = "From Coppy App:\n$copyText"
                                                 ShareText(shareText)
                                             }
                                         },
@@ -775,6 +715,18 @@ private fun EmptyState(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
+}
+
+private fun buildEntryText(
+    title: String,
+    fields: List<EntryField>,
+): String {
+    return buildString {
+        appendLine(title.uppercase())
+        fields.forEach { field ->
+            appendLine("${field.label}: ${field.value_}")
+        }
+    }.trim()
 }
 
 @Composable

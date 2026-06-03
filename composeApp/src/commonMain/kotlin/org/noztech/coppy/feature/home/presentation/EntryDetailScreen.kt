@@ -58,6 +58,7 @@ fun EntryDetailScreen(
 ) {
     val viewModel = koinViewModel<EntryDetailViewModel>()
     val entry by viewModel.entry.collectAsState()
+    val customFields by viewModel.fields.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     var copiedAll by remember { mutableStateOf(false) }
 
@@ -83,10 +84,9 @@ fun EntryDetailScreen(
         val fields = buildList {
             add("Title" to item.title)
             add("Type" to item.entryType.toEntryTypeDisplayName())
-            add("Value" to item.value_.orEmpty())
-            if (!item.issuer.isNullOrBlank()) add("Issuer" to item.issuer)
-            if (!item.expiresAt.isNullOrBlank()) add("Expiry" to item.expiresAt)
-            if (!item.securityCode.isNullOrBlank()) add("CVV" to item.securityCode)
+            customFields.forEach { field ->
+                add(field.label to field.value_)
+            }
         }
 
         LazyColumn(

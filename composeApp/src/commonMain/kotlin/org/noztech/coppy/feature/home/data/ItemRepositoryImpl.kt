@@ -13,38 +13,25 @@ class ItemRepositoryImpl(
     override suspend fun createItem(
         groupId: Long?,
         title: String,
-        value: String?,
         entryType: String,
-        issuer: String?,
-        expiresAt: String?,
-        securityCode: String?,
         hidden: Boolean
     ): Long {
-        dao.insertItem(
+        val item = dao.insertItem(
             groupId = groupId,
             title = title,
-            value = value,
             entryType = entryType,
-            issuer = issuer,
-            expiresAt = expiresAt,
-            securityCode = securityCode,
             hidden = hidden
         )
-        // If you want the new ID, query for it (SQLDelight doesn’t return IDs directly)
-        return dao.getItemsByGroup(groupId ?: 0).lastOrNull()?.id ?: -1
+        return item?.id ?: -1
     }
 
     override suspend fun updateItem(
         id: Long,
         groupId: Long?,
         title: String,
-        value: String?,
         entryType: String,
-        issuer: String?,
-        expiresAt: String?,
-        securityCode: String?,
     ) {
-        dao.updateItem(id, groupId, title, value, entryType, issuer, expiresAt, securityCode)
+        dao.updateItem(id, groupId, title, entryType)
     }
 
     override suspend fun toggleItemVisibility(id: Long) {

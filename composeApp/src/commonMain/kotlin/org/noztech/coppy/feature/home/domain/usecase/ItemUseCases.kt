@@ -11,15 +11,11 @@ class CreateItemUseCase(
     suspend operator fun invoke(
         groupId: Long?,
         title: String,
-        value: String?,
         entryType: String,
-        issuer: String?,
-        expiresAt: String?,
-        securityCode: String?,
         hidden: Boolean = false
     ): Long {
 
-        return repository.createItem(groupId, title, value, entryType, issuer, expiresAt, securityCode, hidden)
+        return repository.createItem(groupId, title, entryType, hidden)
     }
 }
 
@@ -30,13 +26,9 @@ class UpdateItemUseCase(
         id: Long,
         groupId: Long?,
         title: String,
-        value: String?,
         entryType: String,
-        issuer: String?,
-        expiresAt: String?,
-        securityCode: String?,
     ) {
-        repository.updateItem(id, groupId, title, value, entryType, issuer, expiresAt, securityCode)
+        repository.updateItem(id, groupId, title, entryType)
     }
 }
 

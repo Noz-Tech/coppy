@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
@@ -34,25 +32,82 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
 import org.noztech.coppy.feature.home.presentation.composables.CreateGroupBottomSheet
 import org.koin.compose.viewmodel.koinViewModel
+import org.noztech.coppy.feature.home.domain.model.EntryFieldInput
 import org.noztech.coppy.feature.home.presentation.composables.CreateListTopBar
 import org.noztech.coppy.feature.home.presentation.viewmodels.CreateListViewModel
 import org.noztech.coppy.navigation.AuthRoutes
 
 private enum class EntryType(val value: String, val displayName: String) {
-    IdCard("ID_CARD", "ID Card"),
-    AtmCard("ATM_CARD", "ATM Card"),
-    Policy("POLICY", "Policy"),
-    Plate("PLATE", "Plate"),
-    Custom("CUSTOM", "Custom")
+    Id("ID", "ID"),
+    Card("CARD", "Debit / Credit Card"),
+    BankAccount("BANK_ACCOUNT", "Bank Account"),
+    Policy("POLICY", "Insurance / Policy"),
+    Vehicle("VEHICLE", "Vehicle"),
+    Account("ACCOUNT", "Login / Account"),
+    Wifi("WIFI", "Wi-Fi Password"),
+    SecureNote("SECURE_NOTE", "Secure Note"),
+}
+
+private data class CustomFieldUi(
+    val label: String = "",
+    val value: String = "",
+    val required: Boolean = false,
+)
+
+private fun templateFieldsFor(type: EntryType): List<CustomFieldUi> = when (type) {
+    EntryType.Id -> listOf(
+        CustomFieldUi(label = "ID Number", required = true),
+        CustomFieldUi(label = "Full Name"),
+        CustomFieldUi(label = "Issuer"),
+        CustomFieldUi(label = "Expiration Date"),
+    )
+    EntryType.Card -> listOf(
+        CustomFieldUi(label = "Card Number", required = true),
+        CustomFieldUi(label = "Cardholder Name"),
+        CustomFieldUi(label = "Expiry"),
+        CustomFieldUi(label = "CVV"),
+        CustomFieldUi(label = "Issuer"),
+    )
+    EntryType.BankAccount -> listOf(
+        CustomFieldUi(label = "Account Number", required = true),
+        CustomFieldUi(label = "Account Name"),
+        CustomFieldUi(label = "Routing / Sort / Branch Code"),
+        CustomFieldUi(label = "SWIFT / IBAN"),
+    )
+    EntryType.Policy -> listOf(
+        CustomFieldUi(label = "Policy Number", required = true),
+        CustomFieldUi(label = "Provider"),
+        CustomFieldUi(label = "Holder Name"),
+        CustomFieldUi(label = "Coverage Type"),
+        CustomFieldUi(label = "Expiration Date"),
+    )
+    EntryType.Vehicle -> listOf(
+        CustomFieldUi(label = "Plate Number", required = true),
+        CustomFieldUi(label = "Registration Number"),
+        CustomFieldUi(label = "VIN / Chassis Number"),
+        CustomFieldUi(label = "Owner Name"),
+        CustomFieldUi(label = "Expiration Date"),
+    )
+    EntryType.Account -> listOf(
+        CustomFieldUi(label = "Username / Email", required = true),
+        CustomFieldUi(label = "Password"),
+        CustomFieldUi(label = "Website / App"),
+        CustomFieldUi(label = "Recovery Email"),
+    )
+    EntryType.Wifi -> listOf(
+        CustomFieldUi(label = "Password", required = true),
+        CustomFieldUi(label = "Security Type"),
+        CustomFieldUi(label = "Router Admin URL"),
+    )
+    EntryType.SecureNote -> listOf(
+        CustomFieldUi(label = "Note", required = true),
+    )
 }
 
 @Composable
@@ -68,12 +123,9 @@ fun CreateListScreen(
 
     val existingItem = id?.let { viewModel.getItemById(it) }
 
-    var entryType by remember { mutableStateOf(EntryType.Custom) }
+    var entryType by remember { mutableStateOf(EntryType.Id) }
     var name by remember { mutableStateOf("") }
-    var value by remember { mutableStateOf("") }
-    var issuer by remember { mutableStateOf("") }
-    var expiresAt by remember { mutableStateOf("") }
-    var securityCode by remember { mutableStateOf("") }
+    var customFields by remember { mutableStateOf(templateFieldsFor(EntryType.Id)) }
     var showCreateFolderSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(saveState) {
@@ -92,29 +144,26 @@ fun CreateListScreen(
     }
 
     LaunchedEffect(existingItem) {
-        existingItem?.let { item ->
+        if (existingItem == null) {
+            viewModel.clearSelectedGroup()
+            return@LaunchedEffect
+        }
+
+        existingItem.let { item ->
             name = item.title
-            value = item.value_.orEmpty()
-            issuer = item.issuer.orEmpty()
-            expiresAt = item.expiresAt.orEmpty()
-            securityCode = item.securityCode.orEmpty()
-            entryType = EntryType.entries.firstOrNull { it.value == item.entryType } ?: EntryType.Custom
+            entryType = EntryType.entries.firstOrNull { it.value == item.entryType } ?: EntryType.Id
+            val templateFields = templateFieldsFor(entryType)
+            val savedFields = viewModel.getFieldsByEntryId(item.id)
+            val mappedTemplateFields = templateFields.map { templateField ->
+                    val savedField = savedFields.firstOrNull { it.label == templateField.label }
+                    templateField.copy(value = savedField?.value_.orEmpty())
+                }
+            val extraSavedFields = savedFields
+                .filterNot { savedField -> templateFields.any { it.label == savedField.label } }
+                .map { savedField -> CustomFieldUi(label = savedField.label, value = savedField.value_) }
+            customFields = mappedTemplateFields + extraSavedFields
             viewModel.selectGroup(item.groupId)
         }
-    }
-
-    fun primaryLabelFor(type: EntryType): String = when (type) {
-        EntryType.IdCard -> "ID Number"
-        EntryType.AtmCard -> "Card Number"
-        EntryType.Policy -> "Policy Number"
-        EntryType.Plate -> "Plate Number"
-        EntryType.Custom -> "Value"
-    }
-
-    fun valueKeyboardType(type: EntryType): KeyboardType = when (type) {
-        EntryType.IdCard -> KeyboardType.Text
-        EntryType.Custom -> KeyboardType.Text
-        else -> KeyboardType.Number
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -123,12 +172,17 @@ fun CreateListScreen(
                 CreateListTopBar(
                     navController,
                     onSaveClick = {
+                        val fieldInputs = customFields
+                            .map { field ->
+                                EntryFieldInput(
+                                    label = field.label.trim(),
+                                    value = field.value.trim(),
+                                )
+                            }
+                            .filter { field -> field.value.isNotBlank() }
                         val validationError = validateEntry(
-                            type = entryType,
                             name = name,
-                            value = value,
-                            expiresAt = expiresAt,
-                            securityCode = securityCode
+                            fields = customFields,
                         )
                         if (validationError != null) {
                             viewModel.showValidationError(validationError)
@@ -136,12 +190,10 @@ fun CreateListScreen(
                         }
                         viewModel.saveItem(
                             title = name,
-                            value = value,
                             entryType = entryType.value,
-                            issuer = issuer.ifBlank { null },
-                            expiresAt = expiresAt.ifBlank { null },
-                            securityCode = securityCode.ifBlank { null },
-                            existingItemId = existingItem?.id
+                            groupId = selectedGroupId,
+                            existingItemId = existingItem?.id,
+                            fields = fieldInputs,
                         )
                     },
                     title = if (existingItem != null) "Edit Entry" else "Create Entry"
@@ -162,7 +214,12 @@ fun CreateListScreen(
                     items(EntryType.entries) { type ->
                         FilterChip(
                             selected = entryType == type,
-                            onClick = { entryType = type },
+                            onClick = {
+                                if (entryType != type) {
+                                    entryType = type
+                                    customFields = templateFieldsFor(type)
+                                }
+                            },
                             label = { Text(type.displayName) }
                         )
                     }
@@ -171,72 +228,33 @@ fun CreateListScreen(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text(if (entryType == EntryType.IdCard) "ID Card Name" else "Name") },
+                    label = { Text("${entryType.displayName} Name") },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                OutlinedTextField(
-                    value = value,
-                    onValueChange = { value = it },
-                    label = { Text(primaryLabelFor(entryType)) },
-                    singleLine = entryType != EntryType.Custom,
-                    maxLines = if (entryType == EntryType.Custom) 3 else 1,
-                    keyboardOptions = KeyboardOptions(keyboardType = valueKeyboardType(entryType)),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .then(
-                            if (entryType == EntryType.Custom) {
-                                Modifier.height(100.dp)
-                            } else {
-                                Modifier.heightIn(min = 64.dp)
-                            }
-                        )
-                )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
 
-                if (entryType == EntryType.Policy || entryType == EntryType.IdCard) {
-                    OutlinedTextField(
-                        value = issuer,
-                        onValueChange = { issuer = it },
-                        label = { Text("Issuer / Provider") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                if (entryType == EntryType.AtmCard) {
-                    OutlinedTextField(
-                        value = expiresAt,
-                        onValueChange = { input ->
-                            expiresAt = input
-                                .filter { it.isDigit() }
-                                .take(4)
-                                .let {
-                                    when {
-                                        it.length <= 2 -> it
-                                        else -> "${it.take(2)}/${it.drop(2)}"
-                                    }
+                    customFields.forEachIndexed { index, field ->
+                        OutlinedTextField(
+                            value = field.value,
+                            onValueChange = { input ->
+                                customFields = customFields.toMutableList().also {
+                                    it[index] = field.copy(value = input)
                                 }
-                        },
-                        label = { Text("Expiry (MM/YY)") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = securityCode,
-                        onValueChange = { securityCode = it.filter(Char::isDigit).take(4) },
-                        label = { Text("CVV") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                        visualTransformation = PasswordVisualTransformation(),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                            },
+                            label = {
+                                Text(if (field.required) "${field.label} *" else "${field.label} (optional)")
+                            },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
 
                 Column(
@@ -294,27 +312,10 @@ fun CreateListScreen(
 }
 
 private fun validateEntry(
-    type: EntryType,
     name: String,
-    value: String,
-    expiresAt: String,
-    securityCode: String
+    fields: List<CustomFieldUi>,
 ): String? {
-    if (name.isBlank() || value.isBlank()) return "Name and value are required."
-
-    return when (type) {
-        EntryType.AtmCard -> {
-            when {
-                value.filter(Char::isDigit).length !in 12..19 -> "Card number should be 12 to 19 digits."
-                !Regex("^(0[1-9]|1[0-2])/[0-9]{2}$").matches(expiresAt) -> "Expiry must be MM/YY."
-                securityCode.length !in 3..4 -> "CVV should be 3 or 4 digits."
-                else -> null
-            }
-        }
-
-        EntryType.Plate -> if (value.length < 4) "Plate number looks too short." else null
-        EntryType.IdCard -> if (value.length < 4) "ID number looks too short." else null
-        EntryType.Custom -> null
-        else -> if (value.filter(Char::isDigit).length < 6) "Please enter a valid number." else null
-    }
+    if (name.isBlank()) return "Name is required."
+    val missingRequired = fields.firstOrNull { it.required && it.value.isBlank() }
+    return if (missingRequired != null) "${missingRequired.label} is required." else null
 }

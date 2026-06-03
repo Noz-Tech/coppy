@@ -15,43 +15,28 @@ class ItemDao(private val queries: EntryItemQueries) {
     suspend fun insertItem(
         groupId: Long?,
         title: String,
-        value: String?,
         entryType: String,
-        issuer: String?,
-        expiresAt: String?,
-        securityCode: String?,
         hidden: Boolean = false
-    ) {
+    ): EntryItem? {
         queries.insertItem(
             groupId,
             title,
-            value,
             entryType,
-            issuer,
-            expiresAt,
-            securityCode,
             if (hidden) 1 else 0
         )
+        return queries.getLastInsertedItem().executeAsOneOrNull()
     }
 
     suspend fun updateItem(
         id: Long,
         groupId: Long?,
         title: String,
-        value: String?,
         entryType: String,
-        issuer: String?,
-        expiresAt: String?,
-        securityCode: String?,
     ) {
         queries.updateItem(
             groupId,
             title,
-            value,
             entryType,
-            issuer,
-            expiresAt,
-            securityCode,
             id
         )
     }

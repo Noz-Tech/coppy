@@ -12,8 +12,10 @@ import org.noztech.coppy.core.database.DatabaseHelper
 import org.noztech.coppy.core.database.SampleDataSeeder
 import org.noztech.coppy.core.database.VaultDataResetter
 import org.noztech.coppy.core.database.dao.GroupDao
+import org.noztech.coppy.core.database.dao.EntryFieldDao
 import org.noztech.coppy.core.database.dao.ImageDao
 import org.noztech.coppy.core.database.dao.ItemDao
+import org.noztech.coppy.feature.home.data.EntryFieldRepositoryImpl
 import org.noztech.coppy.feature.home.data.GroupRepositoryImpl
 import org.noztech.coppy.feature.home.data.ImageRepositoryImpl
 import org.noztech.coppy.feature.home.data.ItemRepositoryImpl
@@ -26,13 +28,17 @@ import org.noztech.coppy.feature.home.domain.usecase.GetItemCountByGroupUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetItemCountForGroupUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetItemsUseCase
 import org.noztech.coppy.feature.home.domain.respository.GroupRepository
+import org.noztech.coppy.feature.home.domain.respository.EntryFieldRepository
 import org.noztech.coppy.feature.home.domain.respository.ImageRepository
 import org.noztech.coppy.feature.home.domain.respository.ItemRepository
 import org.noztech.coppy.feature.home.domain.usecase.DeleteItemUseCase
+import org.noztech.coppy.feature.home.domain.usecase.DeleteEntryFieldsUseCase
+import org.noztech.coppy.feature.home.domain.usecase.GetEntryFieldsUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetItemByIdUseCase
 import org.noztech.coppy.feature.home.domain.usecase.ToggleItemVisibilityUseCase
 import org.noztech.coppy.feature.home.domain.usecase.UpdateGroupUseCase
 import org.noztech.coppy.feature.home.domain.usecase.UpdateItemUseCase
+import org.noztech.coppy.feature.home.domain.usecase.ReplaceEntryFieldsUseCase
 import org.noztech.coppy.feature.home.presentation.viewmodels.CreateListViewModel
 import org.noztech.coppy.feature.home.presentation.viewmodels.EntryDetailViewModel
 import org.noztech.coppy.feature.home.presentation.viewmodels.GroupViewModel
@@ -54,10 +60,12 @@ val appModule = module {
     single<DatabaseHelper> { DatabaseHelper(get()) }
     single { VaultDataResetter(get()) }
     single { GroupDao(get<AppDatabase>().entryGroupQueries) }
+    single { EntryFieldDao(get<AppDatabase>().entryFieldQueries) }
     single { ItemDao(get<AppDatabase>().entryItemQueries) }
     single { ImageDao(get<AppDatabase>().entryImageQueries) }
 
     singleOf(::GroupRepositoryImpl) { bind<GroupRepository>() }
+    singleOf(::EntryFieldRepositoryImpl) { bind<EntryFieldRepository>() }
     singleOf(::ItemRepositoryImpl) { bind<ItemRepository>() }
     singleOf(::ImageRepositoryImpl) { bind<ImageRepository>() }
     single { CreateGroupUseCase(get()) }
@@ -73,10 +81,13 @@ val appModule = module {
     single { UpdateItemUseCase(get()) }
     single { ToggleItemVisibilityUseCase(get()) }
     single { DeleteItemUseCase(get()) }
+    single { ReplaceEntryFieldsUseCase(get()) }
+    single { DeleteEntryFieldsUseCase(get()) }
+    single { GetEntryFieldsUseCase(get()) }
 
     viewModel { WelcomeViewModel(get()) }
-    viewModel { HomeViewModel(get(), get(), get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { GroupViewModel(get(), get(), get(), get(), get()) }
-    viewModel { CreateListViewModel(get(), get(), get(), get(), get()) }
-    viewModel { EntryDetailViewModel(get(), get()) }
+    viewModel { CreateListViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { EntryDetailViewModel(get(), get(), get()) }
 }

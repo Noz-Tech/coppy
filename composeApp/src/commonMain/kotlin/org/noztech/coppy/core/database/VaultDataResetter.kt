@@ -8,6 +8,7 @@ class VaultDataResetter(
     fun deleteAllData() {
         database.transaction {
             database.entryImageQueries.deleteAllImages()
+            database.entryFieldQueries.deleteAllFields()
             database.entryItemQueries.deleteAllItems()
             database.entryGroupQueries.deleteAllGroups()
         }

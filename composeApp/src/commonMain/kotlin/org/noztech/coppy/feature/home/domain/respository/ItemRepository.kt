@@ -8,11 +8,7 @@ interface ItemRepository {
     suspend fun createItem(
         groupId: Long?,
         title: String,
-        value: String?,
         entryType: String,
-        issuer: String?,
-        expiresAt: String?,
-        securityCode: String?,
         hidden: Boolean = false
     ): Long
 
@@ -20,11 +16,7 @@ interface ItemRepository {
         id: Long,
         groupId: Long?,
         title: String,
-        value: String?,
         entryType: String,
-        issuer: String?,
-        expiresAt: String?,
-        securityCode: String?,
     )
 
     suspend fun toggleItemVisibility(

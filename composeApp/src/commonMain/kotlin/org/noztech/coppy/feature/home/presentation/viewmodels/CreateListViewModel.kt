@@ -9,11 +9,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.noztech.EntryGroup
+import org.noztech.EntryField
 import org.noztech.EntryItem
 import org.noztech.coppy.feature.home.domain.usecase.CreateGroupUseCase
 import org.noztech.coppy.feature.home.domain.usecase.CreateItemUseCase
+import org.noztech.coppy.feature.home.domain.usecase.GetEntryFieldsUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetGroupsUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetItemByIdUseCase
+import org.noztech.coppy.feature.home.domain.model.EntryFieldInput
+import org.noztech.coppy.feature.home.domain.usecase.ReplaceEntryFieldsUseCase
 import org.noztech.coppy.feature.home.domain.usecase.UpdateItemUseCase
 import org.noztech.coppy.feature.home.presentation.SaveState
 
@@ -22,7 +26,9 @@ class CreateListViewModel(
     private val createGroupUseCase: CreateGroupUseCase,
     private val createItemUseCase: CreateItemUseCase,
     private val updateItemUseCase: UpdateItemUseCase,
-    private val getItemByIdUseCase: GetItemByIdUseCase
+    private val getItemByIdUseCase: GetItemByIdUseCase,
+    private val replaceEntryFieldsUseCase: ReplaceEntryFieldsUseCase,
+    private val getEntryFieldsUseCase: GetEntryFieldsUseCase,
 ) : ViewModel() {
 
     private val _imagePath = MutableStateFlow<String?>(null)
@@ -34,6 +40,10 @@ class CreateListViewModel(
 
     fun getItemById(itemId: Long): EntryItem? {
         return getItemByIdUseCase(itemId)
+    }
+
+    fun getFieldsByEntryId(itemId: Long): List<EntryField> {
+        return getEntryFieldsUseCase(itemId)
     }
 
 
@@ -49,6 +59,10 @@ class CreateListViewModel(
 
     fun selectGroup(groupId: Long?) {
         _selectedGroupId.value = groupId
+    }
+
+    fun clearSelectedGroup() {
+        _selectedGroupId.value = null
     }
 
     private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
@@ -70,28 +84,29 @@ class CreateListViewModel(
 
     fun saveItem(
         title: String,
-        value: String,
         entryType: String,
-        issuer: String?,
-        expiresAt: String?,
-        securityCode: String?,
-        existingItemId: Long? = null
+        groupId: Long?,
+        existingItemId: Long? = null,
+        fields: List<EntryFieldInput> = emptyList(),
     ) {
         viewModelScope.launch {
-            if (title.isBlank() || value.isBlank()) {
-                _saveState.value = SaveState.Error("Name and Value cannot be empty")
+            if (title.isBlank() || fields.isEmpty()) {
+                _saveState.value = SaveState.Error("Name and at least one field are required")
                 return@launch
             }
 
             _saveState.value = SaveState.Loading
 
             try {
-                val groupId = _selectedGroupId.value
                 if (existingItemId != null) {
-                    updateItemUseCase(existingItemId, groupId, title, value, entryType, issuer, expiresAt, securityCode)
+                    updateItemUseCase(existingItemId, groupId, title, entryType)
+                    replaceEntryFieldsUseCase(existingItemId, fields)
                     _saveState.value = SaveState.Success("Item updated successfully")
                 } else {
-                    createItemUseCase(groupId, title, value, entryType, issuer, expiresAt, securityCode)
+                    val newItemId = createItemUseCase(groupId, title, entryType)
+                    if (newItemId > 0) {
+                        replaceEntryFieldsUseCase(newItemId, fields)
+                    }
                     _saveState.value = SaveState.Success("Item created successfully")
                 }
             } catch (e: Exception) {

@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.noztech.EntryItem
 import org.noztech.coppy.feature.home.domain.usecase.DeleteItemUseCase
+import org.noztech.coppy.feature.home.domain.usecase.GetEntryFieldsUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetGroupsUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetHiddenItemsUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetItemsUseCase
@@ -23,6 +24,7 @@ class HomeViewModel(
     private val getHiddenItemsUseCase: GetHiddenItemsUseCase,
     private val toggleItemVisibilityUseCase: ToggleItemVisibilityUseCase,
     private val deleteItemUseCase: DeleteItemUseCase,
+    private val getEntryFieldsUseCase: GetEntryFieldsUseCase,
 ) : ViewModel() {
 
     private val _selectedGroupId = MutableStateFlow<Long?>(null)
@@ -61,9 +63,19 @@ class HomeViewModel(
         .debounce(100) // delay to smooth out last char backspace lag
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     private fun EntryItem.matches(query: String): Boolean {
+        val fields = getEntryFieldsUseCase(id)
         return title.lowercase().contains(query) ||
-                value_.orEmpty().lowercase().contains(query)
+            fields.any { field ->
+                field.label.lowercase().contains(query) ||
+                    field.value_.lowercase().contains(query)
+            }
     }
+
+    fun getEntryFields(itemId: Long) =
+        getEntryFieldsUseCase(itemId)
+
+    fun getPrimaryValue(itemId: Long): String =
+        getEntryFieldsUseCase(itemId).firstOrNull()?.value_.orEmpty()
     fun selectGroup(groupId: Long?) {
         _selectedGroupId.value = groupId
     }

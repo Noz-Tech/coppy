@@ -18,13 +18,15 @@ class SampleDataSeeder(
             database.entryItemQueries.insertItem(
                 groupId = null,
                 title = "Sample Driver License",
-                value_ = "D123-4567-8901",
-                entryType = "ID_CARD",
-                issuer = "California DMV",
-                expiresAt = "12/31/2030",
-                securityCode = null,
+                entryType = "ID",
                 hidden = 0,
             )
+            val item = database.entryItemQueries.getLastInsertedItem().executeAsOneOrNull()
+            item?.let {
+                database.entryFieldQueries.insertField(it.id, "ID Number", "D123-4567-8901", 0)
+                database.entryFieldQueries.insertField(it.id, "Issuer / Provider", "California DMV", 1)
+                database.entryFieldQueries.insertField(it.id, "Expiration Date", "12/31/2030", 2)
+            }
         }
 
         appSettings.setSampleDataSeeded()
