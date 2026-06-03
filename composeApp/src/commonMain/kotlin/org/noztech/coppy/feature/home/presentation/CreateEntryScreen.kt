@@ -112,6 +112,7 @@ fun CreateListScreen(
     }
 
     fun valueKeyboardType(type: EntryType): KeyboardType = when (type) {
+        EntryType.IdCard -> KeyboardType.Text
         EntryType.Custom -> KeyboardType.Text
         else -> KeyboardType.Number
     }
@@ -312,6 +313,7 @@ private fun validateEntry(
         }
 
         EntryType.Plate -> if (value.length < 4) "Plate number looks too short." else null
+        EntryType.IdCard -> if (value.length < 4) "ID number looks too short." else null
         EntryType.Custom -> null
         else -> if (value.filter(Char::isDigit).length < 6) "Please enter a valid number." else null
     }
