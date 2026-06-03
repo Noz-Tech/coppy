@@ -31,6 +31,7 @@ import org.noztech.coppy.feature.home.domain.respository.ItemRepository
 import org.noztech.coppy.feature.home.domain.usecase.DeleteItemUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetItemByIdUseCase
 import org.noztech.coppy.feature.home.domain.usecase.ToggleItemVisibilityUseCase
+import org.noztech.coppy.feature.home.domain.usecase.UpdateGroupUseCase
 import org.noztech.coppy.feature.home.domain.usecase.UpdateItemUseCase
 import org.noztech.coppy.feature.home.presentation.viewmodels.CreateListViewModel
 import org.noztech.coppy.feature.home.presentation.viewmodels.EntryDetailViewModel
@@ -60,6 +61,7 @@ val appModule = module {
     singleOf(::ItemRepositoryImpl) { bind<ItemRepository>() }
     singleOf(::ImageRepositoryImpl) { bind<ImageRepository>() }
     single { CreateGroupUseCase(get()) }
+    single { UpdateGroupUseCase(get()) }
     single { DeleteGroupUseCase(get()) }
     single { GetGroupsUseCase(get()) }
     single { GetHiddenItemsUseCase(get()) }
@@ -74,7 +76,7 @@ val appModule = module {
 
     viewModel { WelcomeViewModel(get()) }
     viewModel { HomeViewModel(get(), get(), get(), get(), get()) }
-    viewModel { GroupViewModel(get(), get(), get(), get()) }
+    viewModel { GroupViewModel(get(), get(), get(), get(), get()) }
     viewModel { CreateListViewModel(get(), get(), get(), get(), get()) }
     viewModel { EntryDetailViewModel(get(), get()) }
 }

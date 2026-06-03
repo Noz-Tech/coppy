@@ -1,7 +1,7 @@
 package org.noztech.coppy.feature.home.presentation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -24,23 +22,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -66,13 +58,17 @@ fun GroupScreen(navController: NavController) {
         derivedStateOf { groupsWithCount.sumOf { it.second.toInt() } }
     }
     var showSheet by remember { mutableStateOf(false) }
-    val pendingDeletionIds = remember { mutableStateListOf<Long>() }
-    val visibleGroups by remember(groupsWithCount, pendingDeletionIds.size) {
-        derivedStateOf { groupsWithCount.filterNot { pendingDeletionIds.contains(it.first.id) } }
-    }
+    var showRenameSheet by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedFolderId by remember { mutableStateOf<Long?>(null) }
     var selectedFolderName by remember { mutableStateOf("") }
+    var selectedFolderCount by remember { mutableStateOf(0) }
+
+    fun clearSelection() {
+        selectedFolderId = null
+        selectedFolderName = ""
+        selectedFolderCount = 0
+    }
 
     LaunchedEffect(saveState) {
         when (val state = saveState) {
@@ -84,7 +80,20 @@ fun GroupScreen(navController: NavController) {
     }
 
     Scaffold(
-        topBar = { GroupTopBar(navController) },
+        topBar = {
+            GroupTopBar(
+                navController = navController,
+                selectedFolderName = selectedFolderName.takeIf { selectedFolderId != null },
+                canDeleteSelectedFolder = selectedFolderCount == 0,
+                onCancelSelection = ::clearSelection,
+                onRename = { showRenameSheet = true },
+                onDelete = {
+                    if (selectedFolderCount == 0) {
+                        showDeleteDialog = true
+                    }
+                }
+            )
+        },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = Modifier.fillMaxSize()
     ) { paddingValues ->
@@ -106,65 +115,35 @@ fun GroupScreen(navController: NavController) {
                 )
             }
 
-            if (visibleGroups.isEmpty()) {
+            if (groupsWithCount.isEmpty()) {
                 item {
                     FolderEmptyState()
                 }
             }
 
-            items(visibleGroups) { (group, count) ->
-                val dismissState = rememberSwipeToDismissBoxState()
-                val trashScale by animateFloatAsState(
-                    targetValue = if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) 1.15f else 0.85f,
-                    animationSpec = tween(180),
-                    label = "trashScale"
-                )
-                val trashAlpha by animateFloatAsState(
-                    targetValue = if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) 1f else 0.65f,
-                    animationSpec = tween(180),
-                    label = "trashAlpha"
-                )
-                LaunchedEffect(dismissState.currentValue) {
-                    if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart &&
-                        !pendingDeletionIds.contains(group.id)
-                    ) {
-                        pendingDeletionIds.add(group.id)
+            items(groupsWithCount) { (group, count) ->
+                val isSelected = selectedFolderId == group.id
+                GroupRow(
+                    name = group.name.toFolderDisplayName(),
+                    count = count.toInt(),
+                    isSelected = isSelected,
+                    onClick = {
+                        if (selectedFolderId != null) {
+                            if (isSelected) {
+                                clearSelection()
+                            } else {
+                                selectedFolderId = group.id
+                                selectedFolderName = group.name.toFolderDisplayName()
+                                selectedFolderCount = count.toInt()
+                            }
+                        }
+                    },
+                    onLongClick = {
                         selectedFolderId = group.id
                         selectedFolderName = group.name.toFolderDisplayName()
-                        showDeleteDialog = true
-                        dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+                        selectedFolderCount = count.toInt()
                     }
-                }
-                SwipeToDismissBox(
-                    state = dismissState,
-                    enableDismissFromStartToEnd = false,
-                    backgroundContent = {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.End
-                        ) {
-                            Icon(
-                                imageVector = Lucide.Trash2,
-                                contentDescription = "Delete Folder",
-                                tint = Color.White,
-                                modifier = Modifier.graphicsLayer {
-                                    scaleX = trashScale
-                                    scaleY = trashScale
-                                    alpha = trashAlpha
-                                }
-                            )
-                        }
-                    }
-                ) {
-                    GroupRow(
-                        name = group.name.toFolderDisplayName(),
-                        count = count.toInt(),
-                        onClick = { /* open group */ }
-                    )
-                }
+                )
             }
 
             item {
@@ -203,14 +182,27 @@ fun GroupScreen(navController: NavController) {
                 }
             )
         }
+        if (showRenameSheet) {
+            CreateGroupBottomSheet(
+                showSheet = showRenameSheet,
+                onDismiss = { showRenameSheet = false },
+                onSave = { name ->
+                    selectedFolderId?.let { id ->
+                        viewModel.renameGroup(id, name)
+                    }
+                    showRenameSheet = false
+                    clearSelection()
+                },
+                title = "Rename Folder",
+                initialName = selectedFolderName,
+                saveText = "Rename"
+            )
+        }
 
         ConfirmActionDialog(
             showDialog = showDeleteDialog,
             onDismiss = {
-                selectedFolderId?.let { pendingDeletionIds.remove(it) }
                 showDeleteDialog = false
-                selectedFolderId = null
-                selectedFolderName = ""
             },
             title = "Delete Folder?",
             message = "Are you sure you want to delete \"$selectedFolderName\"?",
@@ -219,11 +211,9 @@ fun GroupScreen(navController: NavController) {
             onConfirm = {
                 selectedFolderId?.let { id ->
                     viewModel.deleteGroup(id)
-                    pendingDeletionIds.remove(id)
                 }
                 showDeleteDialog = false
-                selectedFolderId = null
-                selectedFolderName = ""
+                clearSelection()
             }
         )
     }
@@ -270,16 +260,25 @@ private fun String.toFolderDisplayName(): String {
 private fun GroupRow(
     name: String,
     count: Int,
-    onClick: () -> Unit
+    isSelected: Boolean = false,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit = {},
 ) {
     Surface(
         shape = RoundedCornerShape(10.dp),
         tonalElevation = 1.dp,
-        color = MaterialTheme.colorScheme.background,
+        color = if (isSelected) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.background
+        },
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
-            .clickable(onClick = onClick)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
     ) {
         Row(
             modifier = Modifier

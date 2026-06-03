@@ -14,10 +14,12 @@ import org.noztech.coppy.feature.home.domain.usecase.CreateGroupUseCase
 import org.noztech.coppy.feature.home.domain.usecase.DeleteGroupUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetGroupsUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetItemCountByGroupUseCase
+import org.noztech.coppy.feature.home.domain.usecase.UpdateGroupUseCase
 import org.noztech.coppy.feature.home.presentation.SaveState
 
 class GroupViewModel(
     private val createGroupUseCase: CreateGroupUseCase,
+    private val updateGroupUseCase: UpdateGroupUseCase,
     private val deleteGroupUseCase: DeleteGroupUseCase,
     private val getGroupsUseCase: GetGroupsUseCase,
     private val getItemCountByGroupUseCase: GetItemCountByGroupUseCase
@@ -60,6 +62,18 @@ class GroupViewModel(
             try {
                 deleteGroupUseCase(id)
                 _saveState.value = SaveState.Success("Folder deleted")
+            } catch (e: Exception) {
+                _saveState.value = SaveState.Error(e.message ?: "Unknown error")
+            }
+        }
+    }
+
+    fun renameGroup(id: Long, name: String) {
+        viewModelScope.launch {
+            _saveState.value = SaveState.Loading
+            try {
+                updateGroupUseCase(id, name)
+                _saveState.value = SaveState.Success("Folder renamed")
             } catch (e: Exception) {
                 _saveState.value = SaveState.Error(e.message ?: "Unknown error")
             }

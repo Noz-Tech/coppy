@@ -30,12 +30,15 @@ import androidx.compose.ui.unit.dp
 fun CreateGroupBottomSheet(
     showSheet: Boolean,
     onDismiss: () -> Unit,
-    onSave: (String) -> Unit
+    onSave: (String) -> Unit,
+    title: String = "New Folder",
+    initialName: String = "",
+    saveText: String = "Save",
 ) {
     if (!showSheet) return
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var groupName by remember { mutableStateOf("") }
+    var groupName by remember(showSheet, initialName) { mutableStateOf(initialName) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -50,7 +53,7 @@ fun CreateGroupBottomSheet(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "New Folder",
+                text = title,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
@@ -96,7 +99,7 @@ fun CreateGroupBottomSheet(
                         .height(48.dp),
                     shape = RoundedCornerShape(28.dp)
                 ) {
-                    Text("Save")
+                    Text(saveText)
                 }
             }
 

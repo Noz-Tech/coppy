@@ -16,16 +16,26 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Pen
 import com.composables.icons.lucide.Trash2
+import com.composables.icons.lucide.X
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GroupTopBar(navController: NavController) {
+fun GroupTopBar(
+    navController: NavController,
+    selectedFolderName: String? = null,
+    canDeleteSelectedFolder: Boolean = true,
+    onCancelSelection: () -> Unit = {},
+    onRename: () -> Unit = {},
+    onDelete: () -> Unit = {},
+) {
+    val hasSelection = selectedFolderName != null
 
     CenterAlignedTopAppBar(
         title = {
             Text(
-                text = "Folder",
+                text = selectedFolderName?.uppercase() ?: "Folder",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
@@ -33,11 +43,11 @@ fun GroupTopBar(navController: NavController) {
         },
         navigationIcon = {
             IconButton(onClick = {
-                navController.popBackStack()
+                if (hasSelection) onCancelSelection() else navController.popBackStack()
             }) {
                 Icon(
-                    imageVector = Lucide.ArrowLeft,
-                    contentDescription = "Notifications",
+                    imageVector = if (hasSelection) Lucide.X else Lucide.ArrowLeft,
+                    contentDescription = if (hasSelection) "Cancel" else "Back",
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -48,6 +58,31 @@ fun GroupTopBar(navController: NavController) {
             navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
             actionIconContentColor = MaterialTheme.colorScheme.onSurface
         ),
-        actions = {}
+        actions = {
+            if (hasSelection) {
+                IconButton(onClick = onRename) {
+                    Icon(
+                        imageVector = Lucide.Pen,
+                        contentDescription = "Rename",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                IconButton(
+                    onClick = onDelete,
+                    enabled = canDeleteSelectedFolder
+                ) {
+                    Icon(
+                        imageVector = Lucide.Trash2,
+                        contentDescription = "Delete",
+                        tint = if (canDeleteSelectedFolder) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+                        },
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
     )
 }
