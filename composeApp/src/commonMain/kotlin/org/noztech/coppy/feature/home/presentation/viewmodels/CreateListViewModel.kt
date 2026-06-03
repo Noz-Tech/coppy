@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.noztech.EntryGroup
 import org.noztech.EntryItem
+import org.noztech.coppy.feature.home.domain.usecase.CreateGroupUseCase
 import org.noztech.coppy.feature.home.domain.usecase.CreateItemUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetGroupsUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetItemByIdUseCase
@@ -18,6 +19,7 @@ import org.noztech.coppy.feature.home.presentation.SaveState
 
 class CreateListViewModel(
     private val getGroupsUseCase: GetGroupsUseCase,
+    private val createGroupUseCase: CreateGroupUseCase,
     private val createItemUseCase: CreateItemUseCase,
     private val updateItemUseCase: UpdateItemUseCase,
     private val getItemByIdUseCase: GetItemByIdUseCase
@@ -54,6 +56,16 @@ class CreateListViewModel(
 
     fun showValidationError(message: String) {
         _saveState.value = SaveState.Error(message)
+    }
+
+    fun createGroup(name: String) {
+        viewModelScope.launch {
+            try {
+                createGroupUseCase(name)
+            } catch (e: Exception) {
+                _saveState.value = SaveState.Error(e.message ?: "Unable to create folder")
+            }
+        }
     }
 
     fun saveItem(

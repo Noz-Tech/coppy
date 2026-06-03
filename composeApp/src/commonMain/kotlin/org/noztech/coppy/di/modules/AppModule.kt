@@ -75,6 +75,6 @@ val appModule = module {
     viewModel { WelcomeViewModel(get()) }
     viewModel { HomeViewModel(get(), get(), get(), get(), get()) }
     viewModel { GroupViewModel(get(), get(), get(), get()) }
-    viewModel { CreateListViewModel(get(), get(), get(), get()) }
+    viewModel { CreateListViewModel(get(), get(), get(), get(), get()) }
     viewModel { EntryDetailViewModel(get(), get()) }
 }
