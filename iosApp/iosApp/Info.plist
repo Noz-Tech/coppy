@@ -4,6 +4,10 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>CFBundleShortVersionString</key>
+	<string>v0.1.0-alpha</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Coppy uses Face ID to protect access to your saved entries.</string>
 </dict>

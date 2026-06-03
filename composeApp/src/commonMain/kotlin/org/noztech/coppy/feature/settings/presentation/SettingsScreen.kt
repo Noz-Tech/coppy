@@ -42,12 +42,11 @@ import com.composables.icons.lucide.ShieldCheck
 import androidx.compose.ui.graphics.vector.ImageVector
 import org.koin.compose.getKoin
 import org.noztech.coppy.core.AppSettings
+import org.noztech.coppy.core.AppVersion
 import org.noztech.coppy.core.database.VaultDataResetter
 import org.noztech.coppy.core.util.BiometricAuthResult
 import org.noztech.coppy.core.util.BiometricAuthenticator
 import org.noztech.coppy.navigation.GuestRoutes
-
-private const val APP_VERSION = "v0.1.0-alpha"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -191,7 +190,7 @@ fun SettingsScreen(navController: NavController) {
             )
 
             StaticInfoRow(
-                value = APP_VERSION,
+                value = AppVersion.name,
                 isCompact = true
             )
         }
