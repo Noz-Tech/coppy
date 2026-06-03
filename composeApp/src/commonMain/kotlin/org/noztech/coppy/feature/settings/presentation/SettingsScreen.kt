@@ -10,12 +10,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -46,6 +49,7 @@ import org.noztech.coppy.navigation.GuestRoutes
 
 private const val APP_VERSION = "v0.1.0-alpha"
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(navController: NavController) {
     val appSettings: AppSettings = getKoin().get()
@@ -58,7 +62,7 @@ fun SettingsScreen(navController: NavController) {
     var biometricOnHiddenItems by remember { mutableStateOf(appSettings.isBiometricOnHiddenItemsEnabled()) }
     var showHiddenItems by remember { mutableStateOf(appSettings.isShowHiddenItemsEnabled()) }
     var showDeleteAllDataDialog by remember { mutableStateOf(false) }
-    var policyDialog by remember { mutableStateOf<PolicyDialog?>(null) }
+    var policySheet by remember { mutableStateOf<PolicySheet?>(null) }
     val biometricAuthenticator = remember { BiometricAuthenticator() }
 
     fun setShowHiddenItemsWithGuard(isEnabled: Boolean) {
@@ -176,14 +180,14 @@ fun SettingsScreen(navController: NavController) {
                 title = "Terms & Condition",
                 icon = Lucide.FileText,
                 isCompact = true,
-                onClick = { policyDialog = PolicyDialog.Terms }
+                onClick = { policySheet = PolicySheet.Terms }
             )
 
             SettingsActionRow(
                 title = "Data Privacy",
                 icon = Lucide.ShieldCheck,
                 isCompact = true,
-                onClick = { policyDialog = PolicyDialog.Privacy }
+                onClick = { policySheet = PolicySheet.Privacy }
             )
 
             StaticInfoRow(
@@ -225,30 +229,10 @@ fun SettingsScreen(navController: NavController) {
             )
         }
 
-        policyDialog?.let { dialog ->
-            AlertDialog(
-                onDismissRequest = { policyDialog = null },
-                title = {
-                    Text(
-                        text = when (dialog) {
-                            PolicyDialog.Terms -> "Terms & Condition"
-                            PolicyDialog.Privacy -> "Data Privacy"
-                        }
-                    )
-                },
-                text = {
-                    Text(
-                        text = when (dialog) {
-                            PolicyDialog.Terms -> "Coppy is provided as a local personal vault. You are responsible for the information you save and for keeping your device secure."
-                            PolicyDialog.Privacy -> "Coppy stores your entries locally on this device. Your saved vault data is not uploaded to a server by this app."
-                        }
-                    )
-                },
-                confirmButton = {
-                    TextButton(onClick = { policyDialog = null }) {
-                        Text("Close")
-                    }
-                }
+        policySheet?.let { sheet ->
+            PolicyBottomSheet(
+                policySheet = sheet,
+                onDismiss = { policySheet = null }
             )
         }
     }
@@ -401,7 +385,134 @@ private fun StaticInfoRow(
     }
 }
 
-private enum class PolicyDialog {
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PolicyBottomSheet(
+    policySheet: PolicySheet,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(
+                text = policySheet.title,
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
+            )
+            Text(
+                text = "Last updated: June 3, 2026",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            )
+
+            policySheet.sections.forEach { section ->
+                PolicySection(
+                    title = section.title,
+                    body = section.body
+                )
+            }
+
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text("Close")
+            }
+        }
+    }
+}
+
+@Composable
+private fun PolicySection(
+    title: String,
+    body: String,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+        )
+        Text(
+            text = body,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        )
+    }
+}
+
+private enum class PolicySheet {
     Terms,
     Privacy
 }
+
+private val PolicySheet.title: String
+    get() = when (this) {
+        PolicySheet.Terms -> "Terms & Conditions"
+        PolicySheet.Privacy -> "Data Privacy"
+    }
+
+private val PolicySheet.sections: List<PolicySectionContent>
+    get() = when (this) {
+        PolicySheet.Terms -> termsSections
+        PolicySheet.Privacy -> privacySections
+    }
+
+private val termsSections = listOf(
+    PolicySectionContent(
+        title = "Use of Coppy",
+        body = "Coppy is a local personal vault for saving entries such as IDs, notes, codes, and other information you choose to store. You are responsible for the accuracy, legality, and safety of the information you save."
+    ),
+    PolicySectionContent(
+        title = "Local storage",
+        body = "Your saved entries are stored on your device. Coppy does not guarantee recovery if your device is lost, damaged, reset, or if app data is deleted."
+    ),
+    PolicySectionContent(
+        title = "Security",
+        body = "Coppy may use device security features such as biometrics to protect access to certain actions. You are responsible for keeping your device, passcodes, and biometric access secure."
+    ),
+    PolicySectionContent(
+        title = "No professional advice",
+        body = "Coppy is not a legal, financial, identity, or document verification service. Information stored in the app should not be treated as official verification."
+    ),
+    PolicySectionContent(
+        title = "Limitation of responsibility",
+        body = "Use Coppy at your own discretion. The app is provided as-is, and Noztech is not responsible for loss of data, device issues, or misuse of saved information."
+    )
+)
+
+private val privacySections = listOf(
+    PolicySectionContent(
+        title = "Data you save",
+        body = "Coppy stores the entries, folders, hidden item status, and attached images that you create inside the app."
+    ),
+    PolicySectionContent(
+        title = "Where data is stored",
+        body = "Your vault data is stored locally on your device. Coppy does not upload your saved vault entries to a server."
+    ),
+    PolicySectionContent(
+        title = "Biometrics",
+        body = "When biometric protection is enabled, authentication is handled by your device. Coppy does not receive, store, or transmit your fingerprint, Face ID, or Touch ID data."
+    ),
+    PolicySectionContent(
+        title = "Clipboard and sharing",
+        body = "When you copy or share an entry, that information may become available to your device clipboard, selected share targets, or other apps based on your action."
+    ),
+    PolicySectionContent(
+        title = "Deleting data",
+        body = "You can use Wipe in Settings to remove saved entries, folders, hidden items, and attached images from this device."
+    )
+)
+
+private data class PolicySectionContent(
+    val title: String,
+    val body: String,
+)

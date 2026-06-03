@@ -109,7 +109,7 @@ fun AppTopBar(
                     Image(
                         painter = painterResource(Res.drawable.logo),
                         contentDescription = "Logo",
-                        modifier = Modifier.size(38.dp)
+                        modifier = Modifier.size(42.dp)
                     )
                 }
             },

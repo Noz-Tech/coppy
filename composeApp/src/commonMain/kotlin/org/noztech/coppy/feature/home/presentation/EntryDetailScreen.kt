@@ -126,7 +126,7 @@ fun EntryDetailScreen(
                             }
                         },
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(25.dp)
                     ) {
                         Icon(
                             imageVector = if (copiedAll) Lucide.CopyCheck else Lucide.Copy,
@@ -139,7 +139,7 @@ fun EntryDetailScreen(
                     Button(
                         onClick = { viewModel.toggleVisibility() },
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(25.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
                             contentColor = MaterialTheme.colorScheme.onSurface
