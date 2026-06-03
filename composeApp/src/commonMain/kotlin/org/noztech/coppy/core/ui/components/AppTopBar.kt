@@ -34,7 +34,6 @@ import com.composables.icons.lucide.X
 import coppy.composeapp.generated.resources.Res
 import coppy.composeapp.generated.resources.logo
 import org.jetbrains.compose.resources.painterResource
-import org.noztech.coppy.navigation.AuthRoutes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,7 +45,8 @@ fun AppTopBar(
     onCancelSelection: () -> Unit,
     onEdit: (Long) -> Unit,
     onDelete: (Long) -> Unit,
-    onHide: (Long) -> Unit
+    onHide: (Long) -> Unit,
+    onSettingsClick: () -> Unit,
 ) {
     // Animate background color when selectedItemId changes
     val backgroundColor by animateColorAsState(
@@ -114,7 +114,7 @@ fun AppTopBar(
                 }
             },
             actions = {
-                IconButton(onClick = { navController.navigate(AuthRoutes.Settings) }) {
+                IconButton(onClick = onSettingsClick) {
                     BadgedBox(
                         badge = {
                             Badge(

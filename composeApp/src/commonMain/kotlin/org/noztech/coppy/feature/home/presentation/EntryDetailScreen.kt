@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -37,12 +38,18 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Copy
+import com.composables.icons.lucide.CopyCheck
 import com.composables.icons.lucide.Eye
 import com.composables.icons.lucide.EyeOff
 import com.composables.icons.lucide.Lucide
+import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
 import org.noztech.coppy.core.util.CopyToClipboard
 import org.noztech.coppy.feature.home.presentation.viewmodels.EntryDetailViewModel
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 
 @Composable
 fun EntryDetailScreen(
@@ -51,6 +58,8 @@ fun EntryDetailScreen(
 ) {
     val viewModel = koinViewModel<EntryDetailViewModel>()
     val entry by viewModel.entry.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
+    var copiedAll by remember { mutableStateOf(false) }
 
     LaunchedEffect(id) { viewModel.load(id) }
 
@@ -110,11 +119,19 @@ fun EntryDetailScreen(
                                 }
                             }
                             CopyToClipboard(text.trim())
+                            copiedAll = true
+                            coroutineScope.launch {
+                                delay(3000)
+                                copiedAll = false
+                            }
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Icon(Lucide.Copy, contentDescription = null)
+                        Icon(
+                            imageVector = if (copiedAll) Lucide.CopyCheck else Lucide.Copy,
+                            contentDescription = null
+                        )
                         Spacer(Modifier.width(6.dp))
                         Text("Copy All")
                     }
@@ -178,6 +195,9 @@ private fun EntryFieldRow(
     value: String,
     onCopy: () -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
+    var copied by remember(label, value) { mutableStateOf(false) }
+
     Surface(
         shape = RoundedCornerShape(10.dp),
         tonalElevation = 1.dp,
@@ -207,8 +227,24 @@ private fun EntryFieldRow(
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
-            IconButton(onClick = onCopy) {
-                Icon(Lucide.Copy, contentDescription = "Copy")
+            IconButton(
+                onClick = {
+                    onCopy()
+                    copied = true
+                    coroutineScope.launch {
+                        delay(3000)
+                        copied = false
+                    }
+                }
+            ) {
+                Icon(
+                    imageVector = if (copied) Lucide.CopyCheck else Lucide.Copy,
+                    contentDescription = if (copied) "Copied" else "Copy",
+                    tint = if (copied)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

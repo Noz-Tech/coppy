@@ -169,6 +169,16 @@ fun HomeScreen(navController: NavController) {
                     showConfirmDialog = true
 
                 },
+                onSettingsClick = {
+                    biometricAuthenticator.authenticate(
+                        title = "Open settings",
+                        description = "Authenticate to change Coppy settings"
+                    ) { result ->
+                        if (result == BiometricAuthResult.Success) {
+                            navController.navigate(AuthRoutes.Settings)
+                        }
+                    }
+                },
                 selectedItemTitle = selectedItemTitle
             )
         },
