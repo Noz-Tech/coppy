@@ -36,6 +36,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.composables.icons.lucide.Lucide
@@ -136,6 +138,7 @@ fun CreateListScreen(
     var name by remember { mutableStateOf("") }
     var customFields by remember { mutableStateOf(templateFieldsFor(EntryType.SimpleEntry)) }
     var showCreateFolderSheet by remember { mutableStateOf(false) }
+    var showValidationErrors by remember { mutableStateOf(false) }
 
     LaunchedEffect(saveState) {
         when (saveState) {
@@ -187,6 +190,7 @@ fun CreateListScreen(
                 CreateListTopBar(
                     navController,
                     onSaveClick = {
+                        showValidationErrors = true
                         focusManager.clearFocus(force = true)
                         val validationError = validateEntry(
                             name = name,
@@ -238,6 +242,7 @@ fun CreateListScreen(
                                 if (entryType != type) {
                                     entryType = type
                                     customFields = templateFieldsFor(type)
+                                    showValidationErrors = false
                                 }
                             },
                             shape = RoundedCornerShape(50),
@@ -248,15 +253,21 @@ fun CreateListScreen(
 
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it },
+                    onValueChange = {
+                        name = it
+                    },
                     label = {
                         Text(
                             if (entryType == EntryType.SimpleEntry) "Name *"
                             else "${entryType.displayName} Name *"
                         )
                     },
+                    isError = showValidationErrors && name.isBlank(),
                     supportingText = {
-                        Text("Required")
+                        Text(
+                            if (showValidationErrors && name.isBlank()) "Name is required"
+                            else "Required"
+                        )
                     },
                     singleLine = true,
                     shape = RoundedCornerShape(50),
@@ -287,6 +298,7 @@ fun CreateListScreen(
                                                 } else it
                                             }
                                         },
+                                        showValidationErrors = showValidationErrors,
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                 }
@@ -317,6 +329,7 @@ fun CreateListScreen(
                                                     } else it
                                                 }
                                             },
+                                            showValidationErrors = showValidationErrors,
                                             modifier = Modifier.width(fieldWidth)
                                         )
                                     }
@@ -336,6 +349,7 @@ fun CreateListScreen(
                                                     } else it
                                                 }
                                             },
+                                            showValidationErrors = showValidationErrors,
                                             modifier = Modifier.width(fieldWidth)
                                         )
                                     }
@@ -352,6 +366,7 @@ fun CreateListScreen(
                                             if (it.label == field.label) it.copy(value = input) else it
                                         }
                                     },
+                                    showValidationErrors = showValidationErrors,
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }
@@ -426,21 +441,49 @@ private fun validateEntry(
 private fun EntryFieldTextField(
     field: CustomFieldUi,
     onValueChange: (String) -> Unit,
+    showValidationErrors: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    OutlinedTextField(
-        value = field.value,
-        onValueChange = onValueChange,
-        label = {
-            Text(if (field.required) "${field.label} *" else field.label)
-        },
-        supportingText = {
-            Text(if (field.required) "Required" else "Optional")
-        },
-        singleLine = true,
-        shape = RoundedCornerShape(50),
-        modifier = modifier
-    )
+    val showError = showValidationErrors && field.required && field.value.isBlank()
+    val label: @Composable () -> Unit = {
+        Text(if (field.required) "${field.label} *" else field.label)
+    }
+    val supportingText: @Composable () -> Unit = {
+        Text(
+            when {
+                showError -> "${field.label} is required"
+                field.required -> "Required"
+                else -> "Optional"
+            }
+        )
+    }
+
+    if (field.label == "Expiry") {
+        OutlinedTextField(
+            value = TextFieldValue(
+                text = field.value,
+                selection = TextRange(field.value.length),
+            ),
+            onValueChange = { onValueChange(it.text) },
+            label = label,
+            isError = showError,
+            supportingText = supportingText,
+            singleLine = true,
+            shape = RoundedCornerShape(50),
+            modifier = modifier
+        )
+    } else {
+        OutlinedTextField(
+            value = field.value,
+            onValueChange = onValueChange,
+            label = label,
+            isError = showError,
+            supportingText = supportingText,
+            singleLine = true,
+            shape = RoundedCornerShape(50),
+            modifier = modifier
+        )
+    }
 }
 
 private fun formatFieldValueForDisplay(
