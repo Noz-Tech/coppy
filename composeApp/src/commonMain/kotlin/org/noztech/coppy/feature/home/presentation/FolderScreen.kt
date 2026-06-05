@@ -46,9 +46,6 @@ fun GroupScreen(navController: NavController) {
     val groupsWithCount by viewModel.groupsWithCount.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val totalCount by remember(groupsWithCount) {
-        derivedStateOf { groupsWithCount.sumOf { it.second.toInt() } }
-    }
     var showSheet by remember { mutableStateOf(false) }
     var showRenameSheet by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -100,15 +97,6 @@ fun GroupScreen(navController: NavController) {
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-
-            item {
-                GroupRow(
-                    name = "All",
-                    count = totalCount,
-                    onClick = { /* open all */ }
-                )
-            }
-
             if (groupsWithCount.isEmpty()) {
                 item {
                     FolderEmptyState()
