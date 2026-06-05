@@ -443,6 +443,7 @@ fun HomeScreen(navController: NavController) {
                                     )
                                     MaskableText(
                                         secretValue = primaryValue.uppercase(),
+                                        entryType = item.entryType,
                                         isVisible = isValueVisible
                                     )
                                     folderName?.let { name ->
@@ -639,6 +640,7 @@ fun HomeScreen(navController: NavController) {
                                         )
                                         MaskableText(
                                             secretValue = primaryValue.uppercase(),
+                                            entryType = item.entryType,
                                             isVisible = isValueVisible
                                         )
                                         folderName?.let { name ->
@@ -703,7 +705,7 @@ fun HomeScreen(navController: NavController) {
                                                 MaterialTheme.colorScheme.primary
                                             else
                                                 MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(20.dp)
+                                            modifier = Modifier.size(18.dp)
                                         )
                                     }
 
@@ -831,12 +833,13 @@ private fun iconForEntryType(entryType: String): ImageVector {
 }
 
 @Composable
-fun MaskableText(secretValue: String, isVisible: Boolean) {
+fun MaskableText(secretValue: String, entryType: String, isVisible: Boolean) {
+    val formattedValue = formatPrimaryValueForHome(entryType, secretValue)
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = if (isVisible) secretValue else maskValue(secretValue),
+            text = if (isVisible) formattedValue else maskValue(formattedValue, preserveSpacing = entryType == "CARD"),
             fontWeight = FontWeight.SemiBold,
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurface
@@ -844,11 +847,42 @@ fun MaskableText(secretValue: String, isVisible: Boolean) {
     }
 }
 
-fun maskValue(value: String, visibleCount: Int = 0, maskChar: Char = '•'): String {
-    return if (value.length <= visibleCount) value
-    else buildString {
-        repeat(value.length - visibleCount) { append(maskChar) }
-        append(value.takeLast(visibleCount))
+private fun formatPrimaryValueForHome(entryType: String, value: String): String {
+    return when (entryType) {
+        "CARD" -> value
+            .filterNot(Char::isWhitespace)
+            .chunked(4)
+            .joinToString(" ")
+        else -> value
+    }
+}
+
+fun maskValue(
+    value: String,
+    visibleCount: Int = 0,
+    maskChar: Char = '•',
+    preserveSpacing: Boolean = false,
+): String {
+    if (value.length <= visibleCount) return value
+
+    if (!preserveSpacing) {
+        return buildString {
+            repeat(value.length - visibleCount) { append(maskChar) }
+            append(value.takeLast(visibleCount))
+        }
+    }
+
+    val revealStart = (value.length - visibleCount).coerceAtLeast(0)
+    return buildString {
+        value.forEachIndexed { index, char ->
+            append(
+                when {
+                    char.isWhitespace() -> char
+                    index >= revealStart -> char
+                    else -> maskChar
+                }
+            )
+        }
     }
 }
 
