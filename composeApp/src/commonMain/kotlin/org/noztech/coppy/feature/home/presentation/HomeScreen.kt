@@ -49,6 +49,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -112,6 +113,9 @@ fun HomeScreen(navController: NavController) {
     val showHiddenItems by appSettings.showHiddenItems.collectAsState()
     val selectedGroupId by viewModel.selectedGroupId.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val groupNamesById by remember(groups) {
+        derivedStateOf { groups.associate { it.id to it.name.toFolderDisplayName() } }
+    }
     val listState = rememberLazyListState()
     var showSearchBar by remember { mutableStateOf(true) }
     var searchQuery by remember { mutableStateOf("") }
@@ -383,6 +387,7 @@ fun HomeScreen(navController: NavController) {
                     val entryFields = viewModel.getEntryFields(item.id)
                     val primaryValue = entryFields.firstOrNull()?.value_.orEmpty()
                     val copyText = buildEntryText(item.title, entryFields)
+                    val folderName = groupNamesById[item.groupId]
 
                     Card(
                         shape = RoundedCornerShape(16.dp),
@@ -415,7 +420,7 @@ fun HomeScreen(navController: NavController) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 10.dp, vertical = 8.dp),
+                                .padding(horizontal = 10.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
@@ -424,17 +429,25 @@ fun HomeScreen(navController: NavController) {
                                     imageVector = iconForEntryType(item.entryType),
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(22.dp)
                                 )
-                                Spacer(Modifier.width(12.dp))
+                                Spacer(Modifier.width(10.dp))
                                 Column() {
                                     Text(
                                         text = item.title.uppercase(),
                                         fontWeight = FontWeight.Medium,
-                                        fontSize = 10.sp,
+                                        fontSize = 9.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     MaskableText(secretValue = primaryValue.uppercase())
+                                    folderName?.let { name ->
+                                        Text(
+                                            text = name,
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 10.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
+                                        )
+                                    }
                                 }
                             }
 
@@ -545,6 +558,7 @@ fun HomeScreen(navController: NavController) {
                         val entryFields = viewModel.getEntryFields(item.id)
                         val primaryValue = entryFields.firstOrNull()?.value_.orEmpty()
                         val copyText = buildEntryText(item.title, entryFields)
+                        val folderName = groupNamesById[item.groupId]
 
                         Card(
                             shape = RoundedCornerShape(16.dp),
@@ -576,7 +590,7 @@ fun HomeScreen(navController: NavController) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                                    .padding(horizontal = 10.dp, vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
@@ -585,17 +599,25 @@ fun HomeScreen(navController: NavController) {
                                         imageVector = iconForEntryType(item.entryType),
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
-                                        modifier = Modifier.size(24.dp)
+                                        modifier = Modifier.size(22.dp)
                                     )
-                                    Spacer(Modifier.width(12.dp))
+                                    Spacer(Modifier.width(10.dp))
                                     Column() {
                                         Text(
                                             text = item.title.uppercase(),
                                             fontWeight = FontWeight.Normal,
-                                            fontSize = 10.sp,
+                                            fontSize = 9.sp,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         MaskableText(secretValue = primaryValue.uppercase())
+                                        folderName?.let { name ->
+                                            Text(
+                                                text = name,
+                                                fontWeight = FontWeight.Medium,
+                                                fontSize = 10.sp,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
+                                            )
+                                        }
                                     }
                                 }
 
@@ -763,12 +785,12 @@ fun MaskableText(secretValue: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy((-10).dp),
-        modifier = Modifier.height(28.dp)
+        modifier = Modifier.height(22.dp)
     ) {
         Text(
             text = if (isVisible) secretValue else maskValue(secretValue),
             fontWeight = FontWeight.Medium,
-            fontSize = 16.sp,
+            fontSize = 15.sp,
             color = MaterialTheme.colorScheme.onSurface
         )
         IconButton(onClick = {
