@@ -1,5 +1,6 @@
 package org.noztech.coppy.feature.settings.presentation
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -32,14 +34,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coppy.composeapp.generated.resources.Res
+import coppy.composeapp.generated.resources.logo
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.FileText
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.ShieldCheck
 import androidx.compose.ui.graphics.vector.ImageVector
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.getKoin
 import org.noztech.coppy.core.AppSettings
 import org.noztech.coppy.core.AppVersion
@@ -63,6 +69,16 @@ fun SettingsScreen(navController: NavController) {
     var showDeleteAllDataDialog by remember { mutableStateOf(false) }
     var policySheet by remember { mutableStateOf<PolicySheet?>(null) }
     val biometricAuthenticator = remember { BiometricAuthenticator() }
+
+    fun openPolicySheet(sheet: PolicySheet) {
+        showDeleteAllDataDialog = false
+        policySheet = sheet
+    }
+
+    fun openDeleteAllDataDialog() {
+        policySheet = null
+        showDeleteAllDataDialog = true
+    }
 
     fun setShowHiddenItemsWithGuard(isEnabled: Boolean) {
         if (!isEnabled) {
@@ -170,7 +186,7 @@ fun SettingsScreen(navController: NavController) {
                 title = "Delete all data",
                 description = "Wipe every saved item and folder on this device",
                 isDestructive = true,
-                onClick = { showDeleteAllDataDialog = true }
+                onClick = ::openDeleteAllDataDialog
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -179,14 +195,18 @@ fun SettingsScreen(navController: NavController) {
                 title = "Terms & Condition",
                 icon = Lucide.FileText,
                 isCompact = true,
-                onClick = { policySheet = PolicySheet.Terms }
+                onClick = { openPolicySheet(PolicySheet.Terms) }
             )
 
             SettingsActionRow(
                 title = "Data Privacy",
                 icon = Lucide.ShieldCheck,
                 isCompact = true,
-                onClick = { policySheet = PolicySheet.Privacy }
+                onClick = { openPolicySheet(PolicySheet.Privacy) }
+            )
+
+            AboutCoppyRow(
+                onClick = { openPolicySheet(PolicySheet.About) }
             )
 
             StaticInfoRow(
@@ -203,6 +223,7 @@ fun SettingsScreen(navController: NavController) {
                 confirmButton = {
                     TextButton(
                         onClick = {
+                            policySheet = null
                             vaultDataResetter.deleteAllData()
                             appSettings.setShowHiddenItems(false)
                             appSettings.resetFirstLaunch()
@@ -384,14 +405,43 @@ private fun StaticInfoRow(
     }
 }
 
+@Composable
+private fun AboutCoppyRow(
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Image(
+            painter = painterResource(Res.drawable.logo),
+            contentDescription = "Coppy Logo",
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.size(12.dp))
+        Text(
+            text = "About Coppy",
+            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PolicyBottomSheet(
     policySheet: PolicySheet,
     onDismiss: () -> Unit,
 ) {
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+
     ModalBottomSheet(
-        onDismissRequest = onDismiss
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
     ) {
         Column(
             modifier = Modifier
@@ -401,16 +451,20 @@ private fun PolicyBottomSheet(
                 .padding(bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text(
-                text = policySheet.title,
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
-            )
-            Text(
-                text = "Last updated: June 3, 2026",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            if (policySheet == PolicySheet.About) {
+                AboutSheetHeader()
+            } else {
+                Text(
+                    text = policySheet.title,
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
                 )
-            )
+                Text(
+                    text = "Last updated: June 3, 2026",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+            }
 
             policySheet.sections.forEach { section ->
                 PolicySection(
@@ -426,6 +480,31 @@ private fun PolicyBottomSheet(
                 Text("Close")
             }
         }
+    }
+}
+
+@Composable
+private fun AboutSheetHeader() {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Image(
+            painter = painterResource(Res.drawable.logo),
+            contentDescription = "Coppy Logo",
+            modifier = Modifier.size(72.dp)
+        )
+        Text(
+            text = "Coppy",
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
+        )
+        Text(
+            text = AppVersion.name,
+            style = MaterialTheme.typography.bodySmall.copy(
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        )
     }
 }
 
@@ -450,19 +529,22 @@ private fun PolicySection(
 
 private enum class PolicySheet {
     Terms,
-    Privacy
+    Privacy,
+    About
 }
 
 private val PolicySheet.title: String
     get() = when (this) {
         PolicySheet.Terms -> "Terms & Conditions"
         PolicySheet.Privacy -> "Data Privacy"
+        PolicySheet.About -> "About Coppy"
     }
 
 private val PolicySheet.sections: List<PolicySectionContent>
     get() = when (this) {
         PolicySheet.Terms -> termsSections
         PolicySheet.Privacy -> privacySections
+        PolicySheet.About -> aboutSections
     }
 
 private val termsSections = listOf(
@@ -508,6 +590,17 @@ private val privacySections = listOf(
     PolicySectionContent(
         title = "Deleting data",
         body = "You can use Wipe in Settings to remove saved entries, folders, and hidden items from this device."
+    )
+)
+
+private val aboutSections = listOf(
+    PolicySectionContent(
+        title = "About",
+        body = "Coppy is a local personal vault for storing the information you need to keep close, such as IDs, account details, notes, and other private entries. It is designed to stay simple, fast, and device-first."
+    ),
+    PolicySectionContent(
+        title = "Built for privacy",
+        body = "Your vault data stays on your device, and the local storage used by Coppy is encrypted. Coppy focuses on device-first storage and security features so your information remains under your control."
     )
 )
 
