@@ -199,7 +199,7 @@ fun SettingsScreen(navController: NavController) {
             AlertDialog(
                 onDismissRequest = { showDeleteAllDataDialog = false },
                 title = { Text("Delete all data?") },
-                text = { Text("This will permanently remove all saved entries, hidden items, folders, and attached images from this device.") },
+                text = { Text("This will permanently remove all saved entries, hidden items, and folders from this device.") },
                 confirmButton = {
                     TextButton(
                         onClick = {
@@ -491,7 +491,7 @@ private val termsSections = listOf(
 private val privacySections = listOf(
     PolicySectionContent(
         title = "Data you save",
-        body = "Coppy stores the entries, folders, hidden item status, and attached images that you create inside the app."
+        body = "Coppy stores the entries, folders, and hidden item status that you create inside the app."
     ),
     PolicySectionContent(
         title = "Where data is stored",
@@ -507,7 +507,7 @@ private val privacySections = listOf(
     ),
     PolicySectionContent(
         title = "Deleting data",
-        body = "You can use Wipe in Settings to remove saved entries, folders, hidden items, and attached images from this device."
+        body = "You can use Wipe in Settings to remove saved entries, folders, and hidden items from this device."
     )
 )
 

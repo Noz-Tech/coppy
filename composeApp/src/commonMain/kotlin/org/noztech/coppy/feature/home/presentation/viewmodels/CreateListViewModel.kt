@@ -31,13 +31,6 @@ class CreateListViewModel(
     private val getEntryFieldsUseCase: GetEntryFieldsUseCase,
 ) : ViewModel() {
 
-    private val _imagePath = MutableStateFlow<String?>(null)
-    val imagePath: StateFlow<String?> = _imagePath.asStateFlow()
-
-    fun setImagePath(path: String?) {
-        _imagePath.value = path
-    }
-
     fun getItemById(itemId: Long): EntryItem? {
         return getItemByIdUseCase(itemId)
     }
@@ -122,10 +115,5 @@ class CreateListViewModel(
                 _saveState.value = SaveState.Error(e.message ?: "Unknown error")
             }
         }
-    }
-
-    var openCameraAction: ((onResult: (String?) -> Unit) -> Unit)? = null
-    fun openCamera() {
-        openCameraAction?.invoke { path -> setImagePath(path) }
     }
 }

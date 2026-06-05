@@ -13,11 +13,9 @@ import org.noztech.coppy.core.database.SampleDataSeeder
 import org.noztech.coppy.core.database.VaultDataResetter
 import org.noztech.coppy.core.database.dao.GroupDao
 import org.noztech.coppy.core.database.dao.EntryFieldDao
-import org.noztech.coppy.core.database.dao.ImageDao
 import org.noztech.coppy.core.database.dao.ItemDao
 import org.noztech.coppy.feature.home.data.EntryFieldRepositoryImpl
 import org.noztech.coppy.feature.home.data.GroupRepositoryImpl
-import org.noztech.coppy.feature.home.data.ImageRepositoryImpl
 import org.noztech.coppy.feature.home.data.ItemRepositoryImpl
 import org.noztech.coppy.feature.home.domain.usecase.CreateGroupUseCase
 import org.noztech.coppy.feature.home.domain.usecase.CreateItemUseCase
@@ -29,7 +27,6 @@ import org.noztech.coppy.feature.home.domain.usecase.GetItemCountForGroupUseCase
 import org.noztech.coppy.feature.home.domain.usecase.GetItemsUseCase
 import org.noztech.coppy.feature.home.domain.respository.GroupRepository
 import org.noztech.coppy.feature.home.domain.respository.EntryFieldRepository
-import org.noztech.coppy.feature.home.domain.respository.ImageRepository
 import org.noztech.coppy.feature.home.domain.respository.ItemRepository
 import org.noztech.coppy.feature.home.domain.usecase.DeleteItemUseCase
 import org.noztech.coppy.feature.home.domain.usecase.DeleteEntryFieldsUseCase
@@ -62,12 +59,10 @@ val appModule = module {
     single { GroupDao(get<AppDatabase>().entryGroupQueries) }
     single { EntryFieldDao(get<AppDatabase>().entryFieldQueries) }
     single { ItemDao(get<AppDatabase>().entryItemQueries) }
-    single { ImageDao(get<AppDatabase>().entryImageQueries) }
 
     singleOf(::GroupRepositoryImpl) { bind<GroupRepository>() }
     singleOf(::EntryFieldRepositoryImpl) { bind<EntryFieldRepository>() }
     singleOf(::ItemRepositoryImpl) { bind<ItemRepository>() }
-    singleOf(::ImageRepositoryImpl) { bind<ImageRepository>() }
     single { CreateGroupUseCase(get()) }
     single { UpdateGroupUseCase(get()) }
     single { DeleteGroupUseCase(get()) }
