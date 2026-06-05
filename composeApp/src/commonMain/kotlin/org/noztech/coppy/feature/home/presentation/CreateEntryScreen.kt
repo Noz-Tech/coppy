@@ -251,9 +251,12 @@ fun CreateListScreen(
                     onValueChange = { name = it },
                     label = {
                         Text(
-                            if (entryType == EntryType.SimpleEntry) "Name"
-                            else "${entryType.displayName} Name"
+                            if (entryType == EntryType.SimpleEntry) "Name *"
+                            else "${entryType.displayName} Name *"
                         )
+                    },
+                    supportingText = {
+                        Text("Required")
                     },
                     singleLine = true,
                     shape = RoundedCornerShape(50),
@@ -429,7 +432,10 @@ private fun EntryFieldTextField(
         value = field.value,
         onValueChange = onValueChange,
         label = {
-            Text(if (field.required) "${field.label} *" else "${field.label} (optional)")
+            Text(if (field.required) "${field.label} *" else field.label)
+        },
+        supportingText = {
+            Text(if (field.required) "Required" else "Optional")
         },
         singleLine = true,
         shape = RoundedCornerShape(50),
