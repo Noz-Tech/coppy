@@ -61,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.modifier.ModifierLocalReadScope
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -162,7 +163,7 @@ fun HomeScreen(navController: NavController) {
     }
 
     Scaffold(
-        contentWindowInsets = WindowInsets(0.dp),
+        contentWindowInsets = WindowInsets(0.dp,0.dp,0.dp,0.dp),
         topBar = {
             AppTopBar(
                 navController = navController,
@@ -383,6 +384,7 @@ fun HomeScreen(navController: NavController) {
 
                 items(filteredItems, key = { it.id }) { item ->
                     var copied by remember(item.id) { mutableStateOf(false) }
+                    var isValueVisible by remember(item.id) { mutableStateOf(false) }
                     val isSelected = selectedItemId == item.id
                     val entryFields = viewModel.getEntryFields(item.id)
                     val primaryValue = entryFields.firstOrNull()?.value_.orEmpty()
@@ -439,7 +441,10 @@ fun HomeScreen(navController: NavController) {
                                         fontSize = 9.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
-                                    MaskableText(secretValue = primaryValue.uppercase())
+                                    MaskableText(
+                                        secretValue = primaryValue.uppercase(),
+                                        isVisible = isValueVisible
+                                    )
                                     folderName?.let { name ->
                                         Text(
                                             text = name,
@@ -456,6 +461,28 @@ fun HomeScreen(navController: NavController) {
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.wrapContentWidth()
                             ) {
+                                IconButton(
+                                    onClick = {
+                                        if (isValueVisible) {
+                                            isValueVisible = false
+                                        } else {
+                                            runBiometricGuard(
+                                                enabled = appSettings.isBiometricOnRevealEnabled(),
+                                                title = "Reveal protected data",
+                                                description = "Authenticate to reveal this value"
+                                            ) {
+                                                isValueVisible = true
+                                            }
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = if (isValueVisible) Lucide.EyeOff else Lucide.Eye,
+                                        contentDescription = if (isValueVisible) "Hide" else "Show",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+
                                 IconButton(
                                     onClick = {
                                         runBiometricGuard(
@@ -554,6 +581,7 @@ fun HomeScreen(navController: NavController) {
                 if (showHiddenItems && filteredHiddenItems.isNotEmpty()) {
                     items(filteredHiddenItems, key = { "hidden-${it.id}" }) { item ->
                         var copied by remember(item.id) { mutableStateOf(false) }
+                        var isValueVisible by remember(item.id) { mutableStateOf(false) }
                         val isSelected = selectedItemId == item.id && selectedItemHidden
                         val entryFields = viewModel.getEntryFields(item.id)
                         val primaryValue = entryFields.firstOrNull()?.value_.orEmpty()
@@ -609,7 +637,10 @@ fun HomeScreen(navController: NavController) {
                                             fontSize = 9.sp,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
-                                        MaskableText(secretValue = primaryValue.uppercase())
+                                        MaskableText(
+                                            secretValue = primaryValue.uppercase(),
+                                            isVisible = isValueVisible
+                                        )
                                         folderName?.let { name ->
                                             Text(
                                                 text = name,
@@ -626,6 +657,29 @@ fun HomeScreen(navController: NavController) {
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.wrapContentWidth()
                                 ) {
+                                    IconButton(
+                                        onClick = {
+                                            if (isValueVisible) {
+                                                isValueVisible = false
+                                            } else {
+                                                runBiometricGuard(
+                                                    enabled = appSettings.isBiometricOnRevealEnabled(),
+                                                    title = "Reveal protected data",
+                                                    description = "Authenticate to reveal this value"
+                                                ) {
+                                                    isValueVisible = true
+                                                }
+                                            }
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isValueVisible) Lucide.EyeOff else Lucide.Eye,
+                                            contentDescription = if (isValueVisible) "Hide" else "Show",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+
                                     IconButton(
                                         onClick = {
                                             runBiometricGuard(
@@ -777,49 +831,20 @@ private fun iconForEntryType(entryType: String): ImageVector {
 }
 
 @Composable
-fun MaskableText(secretValue: String) {
-    val appSettings: AppSettings = getKoin().get()
-    val biometricAuthenticator = remember { BiometricAuthenticator() }
-    var isVisible by remember { mutableStateOf(false) }
-
+fun MaskableText(secretValue: String, isVisible: Boolean) {
     Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy((-10).dp),
-        modifier = Modifier.height(22.dp)
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = if (isVisible) secretValue else maskValue(secretValue),
-            fontWeight = FontWeight.Medium,
-            fontSize = 15.sp,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurface
         )
-        IconButton(onClick = {
-            if (isVisible) {
-                isVisible = false
-            } else if (appSettings.isBiometricOnRevealEnabled()) {
-                biometricAuthenticator.authenticate(
-                    title = "Reveal protected data",
-                    description = "Authenticate to reveal this value"
-                ) { result ->
-                    if (result == BiometricAuthResult.Success) {
-                        isVisible = true
-                    }
-                }
-            } else {
-                isVisible = true
-            }
-        }) {
-            Icon(
-                imageVector = if (isVisible) Lucide.EyeOff else Lucide.Eye,
-                contentDescription = if (isVisible) "Hide" else "Show",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp)
-            )
-        }
     }
 }
 
-fun maskValue(value: String, visibleCount: Int = 4, maskChar: Char = '•'): String {
+fun maskValue(value: String, visibleCount: Int = 0, maskChar: Char = '•'): String {
     return if (value.length <= visibleCount) value
     else buildString {
         repeat(value.length - visibleCount) { append(maskChar) }
