@@ -18,6 +18,16 @@ getLastInsertedItem:
 SELECT * FROM EntryItem
 WHERE id = last_insert_rowid();
 
+getNewestMatchingItem:
+SELECT * FROM EntryItem
+WHERE
+    ((:groupId IS NULL AND groupId IS NULL) OR groupId = :groupId)
+    AND title = :title
+    AND entryType = :entryType
+    AND hidden = :hidden
+ORDER BY id DESC
+LIMIT 1;
+
 updateItem:
 UPDATE EntryItem
 SET

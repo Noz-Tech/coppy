@@ -35,9 +35,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -61,21 +59,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.composables.icons.lucide.Car
 import com.composables.icons.lucide.Copy
 import com.composables.icons.lucide.CopyCheck
+import com.composables.icons.lucide.CreditCard
 import com.composables.icons.lucide.Eye
 import com.composables.icons.lucide.EyeOff
+import com.composables.icons.lucide.FileText
 import com.composables.icons.lucide.Folders
 import com.composables.icons.lucide.IdCard
+import com.composables.icons.lucide.KeyRound
+import com.composables.icons.lucide.Landmark
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
 import com.composables.icons.lucide.Search
 import com.composables.icons.lucide.Share2
+import com.composables.icons.lucide.ShieldCheck
+import com.composables.icons.lucide.StickyNote
+import com.composables.icons.lucide.Wifi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.noztech.EntryField
@@ -87,6 +94,7 @@ import org.noztech.coppy.core.ui.components.ConfirmActionDialog
 import org.noztech.coppy.core.util.BiometricAuthResult
 import org.noztech.coppy.core.util.BiometricAuthenticator
 import org.noztech.coppy.core.util.CopyToClipboard
+import org.noztech.coppy.core.util.QuickHaptic
 import org.noztech.coppy.core.util.ShareText
 import org.noztech.coppy.feature.home.presentation.viewmodels.HomeViewModel
 import org.noztech.coppy.navigation.AuthRoutes
@@ -113,13 +121,6 @@ fun HomeScreen(navController: NavController) {
 
     var showConfirmDialog by remember { mutableStateOf(false) }
     var confirmActionType by remember { mutableStateOf<ConfirmActionType?>(null) }
-
-    fun folderLabelFor(groupId: Long?): String {
-        return groups.firstOrNull { it.id == groupId }
-            ?.name
-            ?.toFolderDisplayName()
-            ?: "No Folder"
-    }
 
     fun runBiometricGuard(
         enabled: Boolean,
@@ -193,24 +194,6 @@ fun HomeScreen(navController: NavController) {
                 selectedItemTitle = selectedItemTitle
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    navController.navigate(AuthRoutes.CreateList())
-                },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = CircleShape,
-                modifier = Modifier.size(64.dp)
-            ) {
-                Icon(
-                    imageVector = Lucide.Plus,
-                    contentDescription = "Add",
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-        },
-        floatingActionButtonPosition = FabPosition.End,
         snackbarHost = {
             Box(
                 modifier = Modifier
@@ -238,40 +221,67 @@ fun HomeScreen(navController: NavController) {
                 enter = fadeIn() + slideInVertically(initialOffsetY = { -it / 2 }),
                 exit = fadeOut() + slideOutVertically(targetOffsetY = { -it / 2 })
             ) {
-                TextField(
-                    value = searchQuery,
-                    onValueChange = { newValue ->
-                        searchQuery = newValue
-                        viewModel.updateSearchQuery(newValue)
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Lucide.Search,
-                            contentDescription = "Search",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    },
-                    placeholder = {
-                        Text(
-                            "Search",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.Medium
-                        )
-                    },
-                    shape = RoundedCornerShape(50),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surface,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                        cursorColor = MaterialTheme.colorScheme.primary,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    ),
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(searchBarHeight)
                         .graphicsLayer { alpha = searchBarAlpha }
-                )
+                ) {
+                    TextField(
+                        value = searchQuery,
+                        onValueChange = { newValue ->
+                            searchQuery = newValue
+                            viewModel.updateSearchQuery(newValue)
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Lucide.Search,
+                                contentDescription = "Search",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
+                        placeholder = {
+                            Text(
+                                "Search",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Medium
+                            )
+                        },
+                        shape = RoundedCornerShape(50),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                            cursorColor = MaterialTheme.colorScheme.primary,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                    )
+
+                    Surface(
+                        onClick = {
+                            navController.navigate(AuthRoutes.CreateList())
+                        },
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary,
+                        tonalElevation = 2.dp,
+                        modifier = Modifier.size(52.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Lucide.Plus,
+                                contentDescription = "Add",
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                }
             }
 
             Spacer(
@@ -293,7 +303,7 @@ fun HomeScreen(navController: NavController) {
                         onClick = {
                             navController.navigate(AuthRoutes.Group)
                         },
-                        shape = MaterialTheme.shapes.small,
+                        shape = MaterialTheme.shapes.large,
                         color = MaterialTheme.colorScheme.surface,
                         tonalElevation = 2.dp,
                         modifier = Modifier
@@ -317,7 +327,13 @@ fun HomeScreen(navController: NavController) {
                 item {
                     FilterChip(
                         selected = selectedGroupId == null,
-                        onClick = { viewModel.selectGroup(null) },
+                        onClick = {
+                            if (selectedGroupId != null) {
+                                QuickHaptic()
+                                viewModel.selectGroup(null)
+                            }
+                        },
+                        shape = RoundedCornerShape(50),
                         label = { Text("All") }
                     )
                 }
@@ -325,7 +341,13 @@ fun HomeScreen(navController: NavController) {
                 items(groups) { group ->
                     FilterChip(
                         selected = selectedGroupId == group.id,
-                        onClick = { viewModel.selectGroup(group.id) },
+                        onClick = {
+                            if (selectedGroupId != group.id) {
+                                QuickHaptic()
+                                viewModel.selectGroup(group.id)
+                            }
+                        },
+                        shape = RoundedCornerShape(50),
                         label = { Text(group.name.toFolderDisplayName()) }
                     )
                 }
@@ -399,26 +421,20 @@ fun HomeScreen(navController: NavController) {
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    imageVector = Lucide.IdCard,
+                                    imageVector = iconForEntryType(item.entryType),
                                     contentDescription = null,
-                                    tint = Color.DarkGray,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
                                     modifier = Modifier.size(24.dp)
                                 )
                                 Spacer(Modifier.width(12.dp))
-                                Column(verticalArrangement = Arrangement.spacedBy((-5).dp)) {
+                                Column() {
                                     Text(
                                         text = item.title.uppercase(),
                                         fontWeight = FontWeight.Medium,
-                                        fontSize = 12.sp,
+                                        fontSize = 10.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     MaskableText(secretValue = primaryValue.uppercase())
-                                    Text(
-                                        text = folderLabelFor(item.groupId),
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 11.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                                    )
                                 }
                             }
 
@@ -566,26 +582,20 @@ fun HomeScreen(navController: NavController) {
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
-                                        imageVector = Lucide.EyeOff,
+                                        imageVector = iconForEntryType(item.entryType),
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
                                         modifier = Modifier.size(24.dp)
                                     )
                                     Spacer(Modifier.width(12.dp))
-                                    Column(verticalArrangement = Arrangement.spacedBy((-5).dp)) {
+                                    Column() {
                                         Text(
                                             text = item.title.uppercase(),
-                                            fontWeight = FontWeight.Medium,
-                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Normal,
+                                            fontSize = 10.sp,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         MaskableText(secretValue = primaryValue.uppercase())
-                                        Text(
-                                            text = folderLabelFor(item.groupId),
-                                            fontWeight = FontWeight.Medium,
-                                            fontSize = 11.sp,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                                        )
                                     }
                                 }
 
@@ -729,6 +739,21 @@ private fun buildEntryText(
     }.trim()
 }
 
+private fun iconForEntryType(entryType: String): ImageVector {
+    return when (entryType) {
+        "SIMPLE_ENTRY" -> Lucide.FileText
+        "ID" -> Lucide.IdCard
+        "CARD" -> Lucide.CreditCard
+        "BANK_ACCOUNT" -> Lucide.Landmark
+        "POLICY" -> Lucide.ShieldCheck
+        "VEHICLE" -> Lucide.Car
+        "ACCOUNT" -> Lucide.KeyRound
+        "WIFI" -> Lucide.Wifi
+        "SECURE_NOTE" -> Lucide.StickyNote
+        else -> Lucide.FileText
+    }
+}
+
 @Composable
 fun MaskableText(secretValue: String) {
     val appSettings: AppSettings = getKoin().get()
@@ -738,7 +763,7 @@ fun MaskableText(secretValue: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy((-10).dp),
-        modifier = Modifier.height(32.dp)
+        modifier = Modifier.height(28.dp)
     ) {
         Text(
             text = if (isVisible) secretValue else maskValue(secretValue),

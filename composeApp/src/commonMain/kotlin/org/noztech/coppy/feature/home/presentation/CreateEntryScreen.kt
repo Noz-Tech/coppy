@@ -26,11 +26,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -44,6 +46,7 @@ import org.noztech.coppy.feature.home.presentation.viewmodels.CreateListViewMode
 import org.noztech.coppy.navigation.AuthRoutes
 
 private enum class EntryType(val value: String, val displayName: String) {
+    SimpleEntry("SIMPLE_ENTRY", "Default"),
     Id("ID", "ID"),
     Card("CARD", "Debit / Credit Card"),
     BankAccount("BANK_ACCOUNT", "Bank Account"),
@@ -61,6 +64,9 @@ private data class CustomFieldUi(
 )
 
 private fun templateFieldsFor(type: EntryType): List<CustomFieldUi> = when (type) {
+    EntryType.SimpleEntry -> listOf(
+        CustomFieldUi(label = "Value", required = true),
+    )
     EntryType.Id -> listOf(
         CustomFieldUi(label = "ID Number", required = true),
         CustomFieldUi(label = "Full Name"),
@@ -120,12 +126,13 @@ fun CreateListScreen(
     val groups by viewModel.groups.collectAsState()
     val selectedGroupId by viewModel.selectedGroupId.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
+    val focusManager = LocalFocusManager.current
 
     val existingItem = id?.let { viewModel.getItemById(it) }
 
-    var entryType by remember { mutableStateOf(EntryType.Id) }
+    var entryType by remember { mutableStateOf(EntryType.SimpleEntry) }
     var name by remember { mutableStateOf("") }
-    var customFields by remember { mutableStateOf(templateFieldsFor(EntryType.Id)) }
+    var customFields by remember { mutableStateOf(templateFieldsFor(EntryType.SimpleEntry)) }
     var showCreateFolderSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(saveState) {
@@ -151,7 +158,7 @@ fun CreateListScreen(
 
         existingItem.let { item ->
             name = item.title
-            entryType = EntryType.entries.firstOrNull { it.value == item.entryType } ?: EntryType.Id
+            entryType = EntryType.entries.firstOrNull { it.value == item.entryType } ?: EntryType.SimpleEntry
             val templateFields = templateFieldsFor(entryType)
             val savedFields = viewModel.getFieldsByEntryId(item.id)
             val mappedTemplateFields = templateFields.map { templateField ->
@@ -172,14 +179,7 @@ fun CreateListScreen(
                 CreateListTopBar(
                     navController,
                     onSaveClick = {
-                        val fieldInputs = customFields
-                            .map { field ->
-                                EntryFieldInput(
-                                    label = field.label.trim(),
-                                    value = field.value.trim(),
-                                )
-                            }
-                            .filter { field -> field.value.isNotBlank() }
+                        focusManager.clearFocus(force = true)
                         val validationError = validateEntry(
                             name = name,
                             fields = customFields,
@@ -188,6 +188,14 @@ fun CreateListScreen(
                             viewModel.showValidationError(validationError)
                             return@CreateListTopBar
                         }
+                        val fieldInputs = customFields
+                            .map { field ->
+                                EntryFieldInput(
+                                    label = field.label.trim(),
+                                    value = field.value.trim(),
+                                )
+                            }
+                            .filter { field -> field.value.isNotBlank() }
                         viewModel.saveItem(
                             title = name,
                             entryType = entryType.value,
@@ -228,7 +236,12 @@ fun CreateListScreen(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("${entryType.displayName} Name") },
+                    label = {
+                        Text(
+                            if (entryType == EntryType.SimpleEntry) "Name"
+                            else "${entryType.displayName} Name"
+                        )
+                    },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -239,21 +252,23 @@ fun CreateListScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
 
-                    customFields.forEachIndexed { index, field ->
-                        OutlinedTextField(
-                            value = field.value,
-                            onValueChange = { input ->
-                                customFields = customFields.toMutableList().also {
-                                    it[index] = field.copy(value = input)
-                                }
-                            },
-                            label = {
-                                Text(if (field.required) "${field.label} *" else "${field.label} (optional)")
-                            },
-                            singleLine = true,
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                    customFields.forEach { field ->
+                        key(entryType.value, field.label) {
+                            OutlinedTextField(
+                                value = field.value,
+                                onValueChange = { input ->
+                                    customFields = customFields.map {
+                                        if (it.label == field.label) it.copy(value = input) else it
+                                    }
+                                },
+                                label = {
+                                    Text(if (field.required) "${field.label} *" else "${field.label} (optional)")
+                                },
+                                singleLine = true,
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
 
@@ -279,7 +294,6 @@ fun CreateListScreen(
                             Icon(
                                 imageVector = Lucide.Plus,
                                 contentDescription = "Create Folder",
-                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp)
                             )
                         }

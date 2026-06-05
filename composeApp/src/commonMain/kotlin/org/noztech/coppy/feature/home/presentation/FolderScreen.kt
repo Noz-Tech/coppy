@@ -5,19 +5,13 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -39,9 +33,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Plus
-import com.composables.icons.lucide.Trash2
 import org.koin.compose.viewmodel.koinViewModel
 import org.noztech.coppy.core.ui.components.ConfirmActionDialog
 import org.noztech.coppy.feature.home.presentation.composables.CreateGroupBottomSheet
@@ -86,6 +77,7 @@ fun GroupScreen(navController: NavController) {
                 selectedFolderName = selectedFolderName.takeIf { selectedFolderId != null },
                 canDeleteSelectedFolder = selectedFolderCount == 0,
                 onCancelSelection = ::clearSelection,
+                onCreateFolder = { showSheet = true },
                 onRename = { showRenameSheet = true },
                 onDelete = {
                     if (selectedFolderCount == 0) {
@@ -146,31 +138,6 @@ fun GroupScreen(navController: NavController) {
                 )
             }
 
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = { showSheet = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp), // optional height
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        contentColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Icon(
-                        imageVector = Lucide.Plus,
-                        contentDescription = "Add Image",
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "New Folder",
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
         }
         if (showSheet) {
             CreateGroupBottomSheet(

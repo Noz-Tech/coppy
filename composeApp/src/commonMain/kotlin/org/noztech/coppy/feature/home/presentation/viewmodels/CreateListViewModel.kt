@@ -101,12 +101,21 @@ class CreateListViewModel(
                 if (existingItemId != null) {
                     updateItemUseCase(existingItemId, groupId, title, entryType)
                     replaceEntryFieldsUseCase(existingItemId, fields)
+                    updateItemUseCase(existingItemId, groupId, title, entryType)
                     _saveState.value = SaveState.Success("Item updated successfully")
                 } else {
                     val newItemId = createItemUseCase(groupId, title, entryType)
-                    if (newItemId > 0) {
-                        replaceEntryFieldsUseCase(newItemId, fields)
+                    if (newItemId <= 0) {
+                        _saveState.value = SaveState.Error("Unable to save entry fields")
+                        return@launch
                     }
+                    replaceEntryFieldsUseCase(newItemId, fields)
+                    val savedFields = getEntryFieldsUseCase(newItemId)
+                    if (savedFields.isEmpty()) {
+                        _saveState.value = SaveState.Error("Unable to save entry fields")
+                        return@launch
+                    }
+                    updateItemUseCase(newItemId, groupId, title, entryType)
                     _saveState.value = SaveState.Success("Item created successfully")
                 }
             } catch (e: Exception) {

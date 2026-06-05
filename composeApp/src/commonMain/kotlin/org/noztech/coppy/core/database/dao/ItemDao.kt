@@ -24,7 +24,13 @@ class ItemDao(private val queries: EntryItemQueries) {
             entryType,
             if (hidden) 1 else 0
         )
-        return queries.getLastInsertedItem().executeAsOneOrNull()
+        return queries.getNewestMatchingItem(
+                groupId = groupId,
+                title = title,
+                entryType = entryType,
+                hidden = if (hidden) 1 else 0,
+            ).executeAsOneOrNull()
+            ?: queries.getLastInsertedItem().executeAsOneOrNull()
     }
 
     suspend fun updateItem(

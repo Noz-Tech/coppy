@@ -17,6 +17,7 @@ import androidx.navigation.NavController
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pen
+import com.composables.icons.lucide.Plus
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.X
 
@@ -27,6 +28,7 @@ fun GroupTopBar(
     selectedFolderName: String? = null,
     canDeleteSelectedFolder: Boolean = true,
     onCancelSelection: () -> Unit = {},
+    onCreateFolder: () -> Unit = {},
     onRename: () -> Unit = {},
     onDelete: () -> Unit = {},
 ) {
@@ -80,6 +82,14 @@ fun GroupTopBar(
                             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
                         },
                         modifier = Modifier.size(20.dp)
+                    )
+                }
+            } else {
+                IconButton(onClick = onCreateFolder) {
+                    Icon(
+                        imageVector = Lucide.Plus,
+                        contentDescription = "New Folder",
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }
