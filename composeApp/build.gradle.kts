@@ -79,11 +79,11 @@ kotlin {
 }
 
 android {
-    namespace = "org.noztech.coppy"
+    namespace = "org.noztek.coppy"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "org.noztech.coppy"
+        applicationId = "org.noztek.coppy"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
@@ -115,7 +115,7 @@ dependencies {
 sqldelight {
     databases {
         create("AppDatabase") {
-            packageName.set("org.noztech")
+            packageName.set("org.noztek")
         }
     }
 }
