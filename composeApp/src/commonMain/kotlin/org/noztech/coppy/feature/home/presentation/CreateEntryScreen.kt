@@ -228,6 +228,7 @@ fun CreateListScreen(
                                     customFields = templateFieldsFor(type)
                                 }
                             },
+                            shape = RoundedCornerShape(50),
                             label = { Text(type.displayName) }
                         )
                     }
@@ -243,7 +244,7 @@ fun CreateListScreen(
                         )
                     },
                     singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(50),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -265,7 +266,7 @@ fun CreateListScreen(
                                     Text(if (field.required) "${field.label} *" else "${field.label} (optional)")
                                 },
                                 singleLine = true,
-                                shape = RoundedCornerShape(12.dp),
+                                shape = RoundedCornerShape(50),
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -306,6 +307,7 @@ fun CreateListScreen(
                             FilterChip(
                                 selected = selectedGroupId == group.id,
                                 onClick = { viewModel.selectGroup(group.id) },
+                                shape = RoundedCornerShape(50),
                                 label = { Text(group.name) }
                             )
                         }

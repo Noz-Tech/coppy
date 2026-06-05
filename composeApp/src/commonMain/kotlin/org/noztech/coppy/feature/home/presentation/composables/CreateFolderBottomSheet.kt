@@ -49,7 +49,7 @@ fun CreateGroupBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 0.dp, bottom = 24.dp, start = 24.dp, end = 24.dp),
+                .padding(top = 0.dp, bottom = 0.dp, start = 24.dp, end = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -65,7 +65,7 @@ fun CreateGroupBottomSheet(
                 onValueChange = { groupName = it },
                 label = { Text("Folder Name") },
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(30.dp),
                 modifier = Modifier.fillMaxWidth()
             )
 
