@@ -2,12 +2,14 @@ package org.noztech.coppy.feature.home.presentation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -163,7 +165,13 @@ fun CreateListScreen(
             val savedFields = viewModel.getFieldsByEntryId(item.id)
             val mappedTemplateFields = templateFields.map { templateField ->
                     val savedField = savedFields.firstOrNull { it.label == templateField.label }
-                    templateField.copy(value = savedField?.value_.orEmpty())
+                    templateField.copy(
+                        value = formatFieldValueForDisplay(
+                            entryType = entryType,
+                            fieldLabel = templateField.label,
+                            value = savedField?.value_.orEmpty(),
+                        )
+                    )
                 }
             val extraSavedFields = savedFields
                 .filterNot { savedField -> templateFields.any { it.label == savedField.label } }
@@ -192,7 +200,11 @@ fun CreateListScreen(
                             .map { field ->
                                 EntryFieldInput(
                                     label = field.label.trim(),
-                                    value = field.value.trim(),
+                                    value = formatFieldValueForStorage(
+                                        entryType = entryType,
+                                        fieldLabel = field.label,
+                                        value = field.value.trim(),
+                                    ),
                                 )
                             }
                             .filter { field -> field.value.isNotBlank() }
@@ -252,23 +264,94 @@ fun CreateListScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
+                    if (entryType == EntryType.Card) {
+                        customFields
+                            .filterNot { it.label == "Expiry" || it.label == "CVV" }
+                            .forEach { field ->
+                                key(entryType.value, field.label) {
+                                    EntryFieldTextField(
+                                        field = field,
+                                        onValueChange = { input ->
+                                            customFields = customFields.map {
+                                                if (it.label == field.label) {
+                                                    it.copy(
+                                                        value = formatFieldValueForDisplay(
+                                                            entryType = entryType,
+                                                            fieldLabel = field.label,
+                                                            value = input,
+                                                        )
+                                                    )
+                                                } else it
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
 
-                    customFields.forEach { field ->
-                        key(entryType.value, field.label) {
-                            OutlinedTextField(
-                                value = field.value,
-                                onValueChange = { input ->
-                                    customFields = customFields.map {
-                                        if (it.label == field.label) it.copy(value = input) else it
+                        val expiryField = customFields.firstOrNull { it.label == "Expiry" }
+                        val cvvField = customFields.firstOrNull { it.label == "CVV" }
+                        if (expiryField != null && cvvField != null) {
+                            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                                val fieldWidth = (maxWidth - 10.dp) / 2
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    key(entryType.value, expiryField.label) {
+                                        EntryFieldTextField(
+                                            field = expiryField,
+                                            onValueChange = { input ->
+                                                customFields = customFields.map {
+                                                    if (it.label == expiryField.label) {
+                                                        it.copy(
+                                                            value = formatFieldValueForDisplay(
+                                                                entryType = entryType,
+                                                                fieldLabel = expiryField.label,
+                                                                value = input,
+                                                            )
+                                                        )
+                                                    } else it
+                                                }
+                                            },
+                                            modifier = Modifier.width(fieldWidth)
+                                        )
                                     }
-                                },
-                                label = {
-                                    Text(if (field.required) "${field.label} *" else "${field.label} (optional)")
-                                },
-                                singleLine = true,
-                                shape = RoundedCornerShape(50),
-                                modifier = Modifier.fillMaxWidth()
-                            )
+                                    key(entryType.value, cvvField.label) {
+                                        EntryFieldTextField(
+                                            field = cvvField,
+                                            onValueChange = { input ->
+                                                customFields = customFields.map {
+                                                    if (it.label == cvvField.label) {
+                                                        it.copy(
+                                                            value = formatFieldValueForDisplay(
+                                                                entryType = entryType,
+                                                                fieldLabel = cvvField.label,
+                                                                value = input,
+                                                            )
+                                                        )
+                                                    } else it
+                                                }
+                                            },
+                                            modifier = Modifier.width(fieldWidth)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        customFields.forEach { field ->
+                            key(entryType.value, field.label) {
+                                EntryFieldTextField(
+                                    field = field,
+                                    onValueChange = { input ->
+                                        customFields = customFields.map {
+                                            if (it.label == field.label) it.copy(value = input) else it
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
                         }
                     }
                 }
@@ -334,4 +417,58 @@ private fun validateEntry(
     if (name.isBlank()) return "Name is required."
     val missingRequired = fields.firstOrNull { it.required && it.value.isBlank() }
     return if (missingRequired != null) "${missingRequired.label} is required." else null
+}
+
+@Composable
+private fun EntryFieldTextField(
+    field: CustomFieldUi,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedTextField(
+        value = field.value,
+        onValueChange = onValueChange,
+        label = {
+            Text(if (field.required) "${field.label} *" else "${field.label} (optional)")
+        },
+        singleLine = true,
+        shape = RoundedCornerShape(50),
+        modifier = modifier
+    )
+}
+
+private fun formatFieldValueForDisplay(
+    entryType: EntryType,
+    fieldLabel: String,
+    value: String,
+): String {
+    if (entryType != EntryType.Card) return value
+
+    return when (fieldLabel) {
+        "Card Number" -> value
+            .filter(Char::isDigit)
+            .take(19)
+            .chunked(4)
+            .joinToString(" ")
+        "Expiry" -> {
+            val digits = value.filter(Char::isDigit).take(4)
+            when {
+                digits.length <= 2 -> digits
+                else -> "${digits.take(2)}/${digits.drop(2)}"
+            }
+        }
+        "CVV" -> value.filter(Char::isDigit).take(4)
+        else -> value
+    }
+}
+
+private fun formatFieldValueForStorage(
+    entryType: EntryType,
+    fieldLabel: String,
+    value: String,
+): String {
+    if (entryType == EntryType.Card && fieldLabel == "Card Number") {
+        return value.filterNot(Char::isWhitespace)
+    }
+    return value
 }
