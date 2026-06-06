@@ -6,8 +6,6 @@
 
 Coppy is a secure personal vault for storing IDs, cards, policies, account details, and other private records in one place.
 
-## The Problem It Solves
-
 Important personal information is often kept in physical documents, scattered notes, screenshots, or chat messages. That creates friction when you need something quickly.
 
 Coppy solves this by giving you a single place to store and quickly retrieve personal data when needed, removing the hassle of searching through hard copy documents just to find one detail.
