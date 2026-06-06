@@ -210,7 +210,7 @@ fun SettingsScreen(navController: NavController) {
             )
 
             StaticInfoRow(
-                value = AppVersion.name,
+                value = AppVersion.name.toDisplayVersion(),
                 isCompact = true
             )
         }
@@ -500,7 +500,7 @@ private fun AboutSheetHeader() {
             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
         )
         Text(
-            text = AppVersion.name,
+            text = AppVersion.name.toDisplayVersion(),
             style = MaterialTheme.typography.bodySmall.copy(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -532,6 +532,8 @@ private enum class PolicySheet {
     Privacy,
     About
 }
+
+private fun String.toDisplayVersion(): String = if (startsWith("v", ignoreCase = true)) this else "v$this"
 
 private val PolicySheet.title: String
     get() = when (this) {
