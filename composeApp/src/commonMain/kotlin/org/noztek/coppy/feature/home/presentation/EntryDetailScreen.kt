@@ -164,7 +164,7 @@ private fun EntryTopBar(
     CenterAlignedTopAppBar(
         title = {
             Text(
-                text = title,
+                text = title.toTopBarDisplayName(),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
@@ -248,6 +248,18 @@ private fun EntryFieldRow(
             }
         }
     }
+}
+
+private fun String.toTopBarDisplayName(): String {
+    val acronyms = setOf("id", "sss", "gsis", "atm", "cvv", "tin")
+    return trim()
+        .split(Regex("\\s+"))
+        .filter { it.isNotBlank() }
+        .joinToString(" ") { word ->
+            val lower = word.lowercase()
+            if (lower in acronyms) lower.uppercase()
+            else lower.replaceFirstChar { it.uppercase() }
+        }
 }
 
 private fun String.toEntryTypeDisplayName(): String {
