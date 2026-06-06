@@ -1,3 +1,4 @@
+
 rootProject.name = "Coppy"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
