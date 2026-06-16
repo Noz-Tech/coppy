@@ -66,13 +66,7 @@ fun AppTheme(
         AppSettings.ThemeMode.DARK -> true
     }
     val colorScheme = if (darkTheme) darkScheme else lightScheme
-    //val systemUiController = rememberSystemUiController()
-    val statusBarColor = colorScheme.primary // You can change this to any color
-
-    // Update the status bar color
-//    SideEffect {
-//        systemUiController.setStatusBarColor(color = statusBarColor, darkIcons = !darkTheme)
-//    }
+    ApplySystemBarAppearance(darkTheme = darkTheme)
 
     MaterialTheme(
         colorScheme = colorScheme,

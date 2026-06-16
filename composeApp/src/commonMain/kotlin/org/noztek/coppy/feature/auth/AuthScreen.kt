@@ -11,10 +11,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -131,20 +130,18 @@ fun AuthScreen(
 
             Spacer(Modifier.height(28.dp))
 
-            Button(
+            FilledIconButton(
                 onClick = { authenticate() },
-                shape = CircleShape,
-                colors = ButtonDefaults.buttonColors(
+                colors = IconButtonDefaults.filledIconButtonColors(
                     containerColor = colorScheme.primary,
                     contentColor = colorScheme.onPrimary
                 ),
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(68.dp)
             ) {
                 Icon(
                     imageVector = Lucide.Fingerprint,
-                    contentDescription = "Authenticate",
-                    modifier = Modifier.size(26.dp)
+                    contentDescription = "Authenticate"
                 )
             }
         }

@@ -3,9 +3,7 @@ package org.noztek.coppy
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.fragment.app.FragmentActivity
 import org.noztek.coppy.core.MyActivityProvider
@@ -17,9 +15,6 @@ class MainActivity : FragmentActivity() {
         MyActivityProvider.activity = this
 
         setContent {
-            LaunchedEffect(isSystemInDarkTheme()) {
-                enableEdgeToEdge()
-            }
             App()
         }
     }

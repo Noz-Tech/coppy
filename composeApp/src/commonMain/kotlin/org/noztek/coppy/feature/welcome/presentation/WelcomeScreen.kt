@@ -11,9 +11,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -29,7 +28,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coppy.composeapp.generated.resources.Res
 import coppy.composeapp.generated.resources.logo
-import com.composables.icons.lucide.ArrowRight
 import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Lucide
 import org.jetbrains.compose.resources.painterResource
@@ -92,26 +90,24 @@ fun WelcomeScreen(
                 )
             }
 
-            Button(
+            FilledIconButton(
                 onClick = {
                     viewModel.firstLaunch()
                     onWelcomeCompleted()
                     navController.navigate(AuthRoutes.Home)
                 },
-                shape = CircleShape,
-                colors = ButtonDefaults.buttonColors(
+                colors = IconButtonDefaults.filledIconButtonColors(
                     containerColor = colorScheme.primary,
                     contentColor = colorScheme.onPrimary
                 ),
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 40.dp)
-                    .size(64.dp)
+                    .size(68.dp)
             ) {
                 Icon(
                     imageVector = Lucide.ChevronRight,
-                    contentDescription = "Continue",
-                    modifier = Modifier.size(38.dp)
+                    contentDescription = "Continue"
                 )
             }
         }

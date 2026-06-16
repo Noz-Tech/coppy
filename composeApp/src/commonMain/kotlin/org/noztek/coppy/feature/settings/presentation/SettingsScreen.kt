@@ -20,7 +20,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -36,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -45,13 +43,10 @@ import coppy.composeapp.generated.resources.logo
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Bolt
 import com.composables.icons.lucide.Coffee
-import com.composables.icons.lucide.Monitor
 import com.composables.icons.lucide.FileText
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.MessageSquare
-import com.composables.icons.lucide.MoonStar
 import com.composables.icons.lucide.Star
-import com.composables.icons.lucide.Sun
 import com.composables.icons.lucide.ShieldCheck
 import org.noztek.coppy.core.AppSupport
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -79,9 +74,9 @@ fun SettingsScreen(navController: NavController) {
     var biometricOnHiddenItems by remember { mutableStateOf(appSettings.isBiometricOnHiddenItemsEnabled()) }
     var showHiddenItems by remember { mutableStateOf(appSettings.isShowHiddenItemsEnabled()) }
     val themeMode by appSettings.themeMode.collectAsState()
+    val isDarkModeEnabled = themeMode == AppSettings.ThemeMode.DARK
     var showDeleteAllDataDialog by remember { mutableStateOf(false) }
     var showHelpTipsSheet by remember { mutableStateOf(false) }
-    var showAppearanceSheet by remember { mutableStateOf(false) }
     var showRateAppSheet by remember { mutableStateOf(false) }
     var policySheet by remember { mutableStateOf<PolicySheet?>(null) }
     val biometricAuthenticator = remember { BiometricAuthenticator() }
@@ -96,7 +91,6 @@ fun SettingsScreen(navController: NavController) {
     fun openDeleteAllDataDialog() {
         policySheet = null
         showHelpTipsSheet = false
-        showAppearanceSheet = false
         showRateAppSheet = false
         showDeleteAllDataDialog = true
     }
@@ -104,24 +98,14 @@ fun SettingsScreen(navController: NavController) {
     fun openHelpTipsSheet() {
         policySheet = null
         showDeleteAllDataDialog = false
-        showAppearanceSheet = false
         showRateAppSheet = false
         showHelpTipsSheet = true
-    }
-
-    fun openAppearanceSheet() {
-        policySheet = null
-        showDeleteAllDataDialog = false
-        showHelpTipsSheet = false
-        showRateAppSheet = false
-        showAppearanceSheet = true
     }
 
     fun openRateAppSheet() {
         policySheet = null
         showDeleteAllDataDialog = false
         showHelpTipsSheet = false
-        showAppearanceSheet = false
         showRateAppSheet = true
     }
 
@@ -161,12 +145,6 @@ fun SettingsScreen(navController: NavController) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            SettingValueRow(
-                title = "Appearance",
-                themeMode = themeMode,
-                onClick = ::openAppearanceSheet
-            )
-
             SettingRow(
                 title = "Lock app on launch",
                 description = "Biometric authentication before entering Coppy",
@@ -221,6 +199,16 @@ fun SettingsScreen(navController: NavController) {
                 description = "Display hidden entries below your regular items",
                 checked = showHiddenItems,
                 onCheckedChange = ::setShowHiddenItemsWithGuard
+            )
+            SettingRow(
+                title = "Dark mode",
+                description = "Use the dark appearance across the app",
+                checked = isDarkModeEnabled,
+                onCheckedChange = { isEnabled ->
+                    appSettings.setThemeMode(
+                        if (isEnabled) AppSettings.ThemeMode.DARK else AppSettings.ThemeMode.LIGHT
+                    )
+                }
             )
 
             SettingActionRow(
@@ -333,17 +321,6 @@ fun SettingsScreen(navController: NavController) {
             )
         }
 
-        if (showAppearanceSheet) {
-            AppearanceBottomSheet(
-                selectedMode = themeMode,
-                onDismiss = { showAppearanceSheet = false },
-                onThemeSelected = { mode ->
-                    appSettings.setThemeMode(mode)
-                    showAppearanceSheet = false
-                }
-            )
-        }
-
         if (showRateAppSheet) {
             RateAppBottomSheet(
                 onDismiss = { showRateAppSheet = false },
@@ -439,48 +416,6 @@ private fun SettingActionRow(
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            )
-        }
-    }
-}
-
-@Composable
-private fun SettingValueRow(
-    title: String,
-    themeMode: AppSettings.ThemeMode,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f)
-        )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Text(
-                text = "Theme:",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.End
-            )
-            Icon(
-                imageVector = when (themeMode) {
-                    AppSettings.ThemeMode.SYSTEM -> Lucide.Monitor
-                    AppSettings.ThemeMode.LIGHT -> Lucide.Sun
-                    AppSettings.ThemeMode.DARK -> Lucide.MoonStar
-                },
-                contentDescription = themeMode.toDisplayName(),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp)
             )
         }
     }
@@ -631,50 +566,6 @@ private fun HelpTipsBottomSheet(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AppearanceBottomSheet(
-    selectedMode: AppSettings.ThemeMode,
-    onDismiss: () -> Unit,
-    onThemeSelected: (AppSettings.ThemeMode) -> Unit,
-) {
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true
-    )
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Appearance",
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
-            )
-            Text(
-                text = "Choose how Coppy should handle light and dark mode.",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            )
-
-            AppSettings.ThemeMode.entries.forEach { mode ->
-                ThemeModeRow(
-                    mode = mode,
-                    selected = selectedMode == mode,
-                    onClick = { onThemeSelected(mode) }
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
 private fun RateAppBottomSheet(
     onDismiss: () -> Unit,
     onRateApp: () -> Unit,
@@ -716,39 +607,6 @@ private fun RateAppBottomSheet(
                 title = "Send feedback",
                 icon = Lucide.MessageSquare,
                 onClick = onSendFeedback
-            )
-        }
-    }
-}
-
-@Composable
-private fun ThemeModeRow(
-    mode: AppSettings.ThemeMode,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        RadioButton(
-            selected = selected,
-            onClick = onClick
-        )
-        Spacer(modifier = Modifier.size(10.dp))
-        Column {
-            Text(
-                text = mode.toDisplayName(),
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
-            )
-            Text(
-                text = mode.toDescription(),
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             )
         }
     }
@@ -859,18 +717,6 @@ private enum class PolicySheet {
 }
 
 private fun String.toDisplayVersion(): String = if (startsWith("v", ignoreCase = true)) this else "v$this"
-
-private fun AppSettings.ThemeMode.toDisplayName(): String = when (this) {
-    AppSettings.ThemeMode.SYSTEM -> "System"
-    AppSettings.ThemeMode.LIGHT -> "Light"
-    AppSettings.ThemeMode.DARK -> "Dark"
-}
-
-private fun AppSettings.ThemeMode.toDescription(): String = when (this) {
-    AppSettings.ThemeMode.SYSTEM -> "Follow the current device appearance automatically."
-    AppSettings.ThemeMode.LIGHT -> "Always use the light theme."
-    AppSettings.ThemeMode.DARK -> "Always use the dark theme."
-}
 
 private val PolicySheet.title: String
     get() = when (this) {
