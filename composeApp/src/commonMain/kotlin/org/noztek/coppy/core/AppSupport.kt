@@ -3,6 +3,7 @@ package org.noztek.coppy.core
 object AppSupport {
     const val feedbackEmail = "noztek@protonmail.com"
     const val playStoreUrl = "https://play.google.com/store/apps/details?id=org.noztek.coppy"
+    const val koFiUrl = "https://ko-fi.com/noztek"
 
     fun feedbackMailTo(subject: String): String {
         return "mailto:$feedbackEmail?subject=${subject.encodeForUrl()}"

@@ -44,6 +44,7 @@ import coppy.composeapp.generated.resources.Res
 import coppy.composeapp.generated.resources.logo
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Bolt
+import com.composables.icons.lucide.Coffee
 import com.composables.icons.lucide.Monitor
 import com.composables.icons.lucide.FileText
 import com.composables.icons.lucide.Lucide
@@ -236,6 +237,15 @@ fun SettingsScreen(navController: NavController) {
                 icon = Lucide.Star,
                 isCompact = true,
                 onClick = ::openRateAppSheet
+            )
+
+            SettingsActionRow(
+                title = "Buy me a coffee",
+                icon = Lucide.Coffee,
+                isCompact = true,
+                onClick = {
+                    OpenExternalUrl(AppSupport.koFiUrl)
+                }
             )
 
             SettingsActionRow(
