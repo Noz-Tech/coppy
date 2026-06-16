@@ -151,7 +151,7 @@ fun SettingsScreen(navController: NavController) {
                 .padding(paddingValues)
                 .fillMaxSize()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             SettingRow(
                 icon = Lucide.Lock,
@@ -440,7 +440,7 @@ private fun SettingActionRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                 color = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
             )
             Text(
