@@ -42,6 +42,7 @@ fun AppTopBar(
     selectedItemId: Long?,
     selectedItemTitle: String?,
     selectedItemHidden: Boolean = false,
+    settingsButtonModifier: Modifier = Modifier,
     onCancelSelection: () -> Unit,
     onEdit: (Long) -> Unit,
     onDelete: (Long) -> Unit,
@@ -114,7 +115,10 @@ fun AppTopBar(
                 }
             },
             actions = {
-                IconButton(onClick = onSettingsClick) {
+                IconButton(
+                    onClick = onSettingsClick,
+                    modifier = settingsButtonModifier
+                ) {
                     BadgedBox(
                         badge = {
                             Badge(

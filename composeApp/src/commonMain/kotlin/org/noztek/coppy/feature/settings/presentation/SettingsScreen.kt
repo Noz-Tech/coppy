@@ -41,10 +41,12 @@ import androidx.navigation.NavController
 import coppy.composeapp.generated.resources.Res
 import coppy.composeapp.generated.resources.logo
 import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.Bolt
 import com.composables.icons.lucide.FileText
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.ShieldCheck
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.composables.icons.lucide.Info
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.getKoin
 import org.noztek.coppy.core.AppSettings
@@ -67,17 +69,26 @@ fun SettingsScreen(navController: NavController) {
     var biometricOnHiddenItems by remember { mutableStateOf(appSettings.isBiometricOnHiddenItemsEnabled()) }
     var showHiddenItems by remember { mutableStateOf(appSettings.isShowHiddenItemsEnabled()) }
     var showDeleteAllDataDialog by remember { mutableStateOf(false) }
+    var showHelpTipsSheet by remember { mutableStateOf(false) }
     var policySheet by remember { mutableStateOf<PolicySheet?>(null) }
     val biometricAuthenticator = remember { BiometricAuthenticator() }
 
     fun openPolicySheet(sheet: PolicySheet) {
         showDeleteAllDataDialog = false
+        showHelpTipsSheet = false
         policySheet = sheet
     }
 
     fun openDeleteAllDataDialog() {
         policySheet = null
+        showHelpTipsSheet = false
         showDeleteAllDataDialog = true
+    }
+
+    fun openHelpTipsSheet() {
+        policySheet = null
+        showDeleteAllDataDialog = false
+        showHelpTipsSheet = true
     }
 
     fun setShowHiddenItemsWithGuard(isEnabled: Boolean) {
@@ -116,11 +127,6 @@ fun SettingsScreen(navController: NavController) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text(
-                text = "Security",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
-            )
-
             SettingRow(
                 title = "Lock app on launch",
                 description = "Biometric authentication before entering Coppy",
@@ -170,11 +176,6 @@ fun SettingsScreen(navController: NavController) {
                     appSettings.setBiometricOnHiddenItems(it)
                 }
             )
-            Text(
-                text = "Other",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
-            )
-
             SettingRow(
                 title = "Show hidden items",
                 description = "Display hidden entries below your regular items",
@@ -190,6 +191,13 @@ fun SettingsScreen(navController: NavController) {
             )
 
             Spacer(modifier = Modifier.weight(1f))
+
+            SettingsActionRow(
+                title = "Help & Tips",
+                icon = Lucide.Info,
+                isCompact = true,
+                onClick = ::openHelpTipsSheet
+            )
 
             SettingsActionRow(
                 title = "Terms & Condition",
@@ -227,6 +235,7 @@ fun SettingsScreen(navController: NavController) {
                             vaultDataResetter.deleteAllData()
                             appSettings.setShowHiddenItems(false)
                             appSettings.resetFirstLaunch()
+                            appSettings.resetHomeOnboarding()
                             appSettings.resetSampleDataSeeded()
                             showHiddenItems = false
                             showDeleteAllDataDialog = false
@@ -253,6 +262,17 @@ fun SettingsScreen(navController: NavController) {
             PolicyBottomSheet(
                 policySheet = sheet,
                 onDismiss = { policySheet = null }
+            )
+        }
+
+        if (showHelpTipsSheet) {
+            HelpTipsBottomSheet(
+                onDismiss = { showHelpTipsSheet = false },
+                onReplayTutorial = {
+                    showHelpTipsSheet = false
+                    appSettings.requestHomeOnboardingReplay()
+                    navController.popBackStack()
+                }
             )
         }
     }
@@ -426,6 +446,62 @@ private fun AboutCoppyRow(
             style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
             color = MaterialTheme.colorScheme.onSurface
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HelpTipsBottomSheet(
+    onDismiss: () -> Unit,
+    onReplayTutorial: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(
+                text = "Help & Tips",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
+            )
+            Text(
+                text = "Use this as a quick refresher whenever you want to review how Coppy works.",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            )
+
+            PolicySection(
+                title = "Add and organize",
+                body = "Use the plus button on Home to add new items, and use folders to keep entries grouped in a way that makes sense to you."
+            )
+            PolicySection(
+                title = "Quick actions",
+                body = "Each entry lets you reveal, copy, or share its main value directly from Home. Tap the item itself to open the full detail view."
+            )
+            PolicySection(
+                title = "Privacy controls",
+                body = "Settings lets you turn biometric protection on or off for app launch, reveal, copy, share, and hidden items."
+            )
+
+            TextButton(
+                onClick = onReplayTutorial,
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text("Replay tutorial")
+            }
+        }
     }
 }
 

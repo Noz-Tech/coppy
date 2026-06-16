@@ -248,7 +248,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = "v0.1.0-alpha";
+				MARKETING_VERSION = "0.1.0-beta.2";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lsqlite3",
@@ -347,7 +347,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = "v0.1.0-alpha";
+				MARKETING_VERSION = "0.1.0-beta.2";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lsqlite3",

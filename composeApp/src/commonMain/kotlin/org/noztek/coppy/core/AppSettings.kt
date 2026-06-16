@@ -15,10 +15,22 @@ class AppSettings(private val settings: Settings) {
         private const val KEY_BIOMETRIC_ON_HIDDEN_ITEMS = "biometric_on_hidden_items"
         private const val KEY_SHOW_HIDDEN_ITEMS = "show_hidden_items"
         private const val KEY_SAMPLE_DATA_SEEDED = "sample_data_seeded"
+        private const val KEY_HOME_ONBOARDING_COMPLETED = "home_onboarding_completed"
+        private const val KEY_HOME_ONBOARDING_REPLAY_PENDING = "home_onboarding_replay_pending"
     }
 
+    private val _lockOnLaunchEnabled = MutableStateFlow(settings.getBoolean(KEY_LOCK_ON_LAUNCH, false))
+    val lockOnLaunchEnabled = _lockOnLaunchEnabled.asStateFlow()
     private val _showHiddenItems = MutableStateFlow(settings.getBoolean(KEY_SHOW_HIDDEN_ITEMS, false))
     val showHiddenItems = _showHiddenItems.asStateFlow()
+    private val _homeOnboardingCompleted = MutableStateFlow(
+        settings.getBoolean(KEY_HOME_ONBOARDING_COMPLETED, false)
+    )
+    val homeOnboardingCompleted = _homeOnboardingCompleted.asStateFlow()
+    private val _homeOnboardingReplayPending = MutableStateFlow(
+        settings.getBoolean(KEY_HOME_ONBOARDING_REPLAY_PENDING, false)
+    )
+    val homeOnboardingReplayPending = _homeOnboardingReplayPending.asStateFlow()
 
     fun setFirstLaunch() {
         settings.putBoolean(KEY_IS_FIRST_LAUNCH, false)
@@ -30,6 +42,7 @@ class AppSettings(private val settings: Settings) {
 
     fun setLockOnLaunch(isEnabled: Boolean) {
         settings.putBoolean(KEY_LOCK_ON_LAUNCH, isEnabled)
+        _lockOnLaunchEnabled.value = isEnabled
     }
 
     fun setBiometricPermissionAsked() {
@@ -63,6 +76,28 @@ class AppSettings(private val settings: Settings) {
 
     fun resetSampleDataSeeded() {
         settings.putBoolean(KEY_SAMPLE_DATA_SEEDED, false)
+    }
+
+    fun completeHomeOnboarding() {
+        settings.putBoolean(KEY_HOME_ONBOARDING_COMPLETED, true)
+        _homeOnboardingCompleted.value = true
+    }
+
+    fun resetHomeOnboarding() {
+        settings.putBoolean(KEY_HOME_ONBOARDING_COMPLETED, false)
+        settings.putBoolean(KEY_HOME_ONBOARDING_REPLAY_PENDING, false)
+        _homeOnboardingCompleted.value = false
+        _homeOnboardingReplayPending.value = false
+    }
+
+    fun requestHomeOnboardingReplay() {
+        settings.putBoolean(KEY_HOME_ONBOARDING_REPLAY_PENDING, true)
+        _homeOnboardingReplayPending.value = true
+    }
+
+    fun clearHomeOnboardingReplayRequest() {
+        settings.putBoolean(KEY_HOME_ONBOARDING_REPLAY_PENDING, false)
+        _homeOnboardingReplayPending.value = false
     }
 
     fun isFirstLaunch(): Boolean {
@@ -99,5 +134,13 @@ class AppSettings(private val settings: Settings) {
 
     fun isSampleDataSeeded(): Boolean {
         return settings.getBoolean(KEY_SAMPLE_DATA_SEEDED, false)
+    }
+
+    fun isHomeOnboardingCompleted(): Boolean {
+        return settings.getBoolean(KEY_HOME_ONBOARDING_COMPLETED, false)
+    }
+
+    fun isHomeOnboardingReplayPending(): Boolean {
+        return settings.getBoolean(KEY_HOME_ONBOARDING_REPLAY_PENDING, false)
     }
 }

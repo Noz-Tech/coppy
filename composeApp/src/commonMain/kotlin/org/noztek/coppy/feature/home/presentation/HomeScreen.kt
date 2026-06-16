@@ -58,10 +58,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.modifier.ModifierLocalReadScope
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -112,6 +115,9 @@ fun HomeScreen(navController: NavController) {
     val filteredItems by viewModel.filteredItems.collectAsState()
     val hiddenItems by viewModel.hiddenItems.collectAsState()
     val showHiddenItems by appSettings.showHiddenItems.collectAsState()
+    val lockOnLaunchEnabled by appSettings.lockOnLaunchEnabled.collectAsState()
+    val homeOnboardingCompleted by appSettings.homeOnboardingCompleted.collectAsState()
+    val homeOnboardingReplayPending by appSettings.homeOnboardingReplayPending.collectAsState()
     val selectedGroupId by viewModel.selectedGroupId.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val groupNamesById by remember(groups) {
@@ -126,6 +132,87 @@ fun HomeScreen(navController: NavController) {
 
     var showConfirmDialog by remember { mutableStateOf(false) }
     var confirmActionType by remember { mutableStateOf<ConfirmActionType?>(null) }
+    var rootSize by remember { mutableStateOf(IntSize.Zero) }
+    var addButtonBounds by remember { mutableStateOf<Rect?>(null) }
+    var folderButtonBounds by remember { mutableStateOf<Rect?>(null) }
+    var settingsButtonBounds by remember { mutableStateOf<Rect?>(null) }
+    var firstEntryCardBounds by remember { mutableStateOf<Rect?>(null) }
+    var showHomeTutorial by remember { mutableStateOf(false) }
+    var tutorialStepIndex by remember { mutableStateOf(0) }
+
+    val tutorialSteps by remember(filteredItems.isNotEmpty(), firstEntryCardBounds) {
+        derivedStateOf {
+            buildList {
+                add(
+                    HomeTutorialStep(
+                        title = "Welcome to your vault",
+                        body = "Coppy keeps the details you use often in one place, so you do not have to dig through documents, notes, or messages each time.",
+                    )
+                )
+                add(
+                    HomeTutorialStep(
+                        title = "Add your first item",
+                        body = "Use the plus button whenever you want to save a new ID, account, card, note, or other important detail.",
+                        target = HomeTutorialTarget.AddEntry
+                    )
+                )
+                add(
+                    HomeTutorialStep(
+                        title = "Keep things organized",
+                        body = "Folders help you separate work, personal, banking, or any other group of entries you want to keep tidy.",
+                        target = HomeTutorialTarget.Folders
+                    )
+                )
+                if (filteredItems.isNotEmpty() && firstEntryCardBounds != null) {
+                    add(
+                        HomeTutorialStep(
+                            title = "Use entry actions quickly",
+                            body = "Tap an item to open details. From each card, you can reveal, copy, or share its main value without leaving Home.",
+                            target = HomeTutorialTarget.FirstEntry
+                        )
+                    )
+                }
+                add(
+                    HomeTutorialStep(
+                        title = "Privacy controls live here",
+                        body = "Open Settings to manage biometric protection, hidden items, and replay this tutorial later from Help & Tips.",
+                        target = HomeTutorialTarget.Settings
+                    )
+                )
+                add(
+                    HomeTutorialStep(
+                        title = "You can revisit this anytime",
+                        body = "If you want a refresher later, go to Settings and open Help & Tips to replay the tutorial and review the main features."
+                    )
+                )
+            }
+        }
+    }
+    val tutorialReady by remember(addButtonBounds, folderButtonBounds, settingsButtonBounds, filteredItems, firstEntryCardBounds) {
+        derivedStateOf {
+            addButtonBounds != null &&
+                folderButtonBounds != null &&
+                settingsButtonBounds != null &&
+                (filteredItems.isEmpty() || firstEntryCardBounds != null)
+        }
+    }
+    val shouldStartTutorial by remember(
+        lockOnLaunchEnabled,
+        homeOnboardingCompleted,
+        homeOnboardingReplayPending
+    ) {
+        derivedStateOf {
+            homeOnboardingReplayPending || (lockOnLaunchEnabled && !homeOnboardingCompleted)
+        }
+    }
+    val currentTutorialStep = tutorialSteps.getOrNull(tutorialStepIndex)
+    val currentTutorialTargetBounds = when (currentTutorialStep?.target) {
+        HomeTutorialTarget.AddEntry -> addButtonBounds
+        HomeTutorialTarget.Folders -> folderButtonBounds
+        HomeTutorialTarget.FirstEntry -> firstEntryCardBounds
+        HomeTutorialTarget.Settings -> settingsButtonBounds
+        null -> null
+    }
 
     fun runBiometricGuard(
         enabled: Boolean,
@@ -141,6 +228,20 @@ fun HomeScreen(navController: NavController) {
             if (result == BiometricAuthResult.Success) {
                 onSuccess()
             }
+        }
+    }
+
+    fun finishHomeTutorial() {
+        appSettings.completeHomeOnboarding()
+        appSettings.clearHomeOnboardingReplayRequest()
+        showHomeTutorial = false
+        tutorialStepIndex = 0
+    }
+
+    LaunchedEffect(shouldStartTutorial, tutorialReady) {
+        if (shouldStartTutorial && tutorialReady && !showHomeTutorial) {
+            showHomeTutorial = true
+            tutorialStepIndex = 0
         }
     }
 
@@ -162,65 +263,73 @@ fun HomeScreen(navController: NavController) {
             }
     }
 
-    Scaffold(
-        contentWindowInsets = WindowInsets(0.dp,0.dp,0.dp,0.dp),
-        topBar = {
-            AppTopBar(
-                navController = navController,
-                selectedItemId = selectedItemId,
-                selectedItemHidden = selectedItemHidden,
-                onCancelSelection = {
-                    selectedItemId = null
-                    selectedItemTitle = null
-                    selectedItemHidden = false
-                },
-                onEdit = { id ->
-                    navController.navigate(AuthRoutes.CreateList(selectedItemId))
-                },
-                onDelete = { id ->
-                    confirmActionType = ConfirmActionType.DELETE
-                    showConfirmDialog = true
-                },
-                onHide = { id ->
-                    confirmActionType = ConfirmActionType.HIDE
-                    showConfirmDialog = true
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .onGloballyPositioned { rootSize = it.size }
+    ) {
+        Scaffold(
+            contentWindowInsets = WindowInsets(0.dp,0.dp,0.dp,0.dp),
+            topBar = {
+                AppTopBar(
+                    navController = navController,
+                    selectedItemId = selectedItemId,
+                    selectedItemHidden = selectedItemHidden,
+                    settingsButtonModifier = Modifier.onGloballyPositioned {
+                        settingsButtonBounds = it.boundsInRoot()
+                    },
+                    onCancelSelection = {
+                        selectedItemId = null
+                        selectedItemTitle = null
+                        selectedItemHidden = false
+                    },
+                    onEdit = { id ->
+                        navController.navigate(AuthRoutes.CreateList(selectedItemId))
+                    },
+                    onDelete = { id ->
+                        confirmActionType = ConfirmActionType.DELETE
+                        showConfirmDialog = true
+                    },
+                    onHide = { id ->
+                        confirmActionType = ConfirmActionType.HIDE
+                        showConfirmDialog = true
 
-                },
-                onSettingsClick = {
-                    biometricAuthenticator.authenticate(
-                        title = "Open settings",
-                        description = "Authenticate to change Coppy settings"
-                    ) { result ->
-                        if (result == BiometricAuthResult.Success) {
-                            navController.navigate(AuthRoutes.Settings)
+                    },
+                    onSettingsClick = {
+                        biometricAuthenticator.authenticate(
+                            title = "Open settings",
+                            description = "Authenticate to change Coppy settings"
+                        ) { result ->
+                            if (result == BiometricAuthResult.Success) {
+                                navController.navigate(AuthRoutes.Settings)
+                            }
                         }
-                    }
-                },
-                selectedItemTitle = selectedItemTitle
-            )
-        },
-        snackbarHost = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 70.dp) // adjust distance from top bar
-                    .wrapContentHeight(Alignment.Top),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                SnackbarHost(hostState = snackbarHostState)
-            }
-        },
-        modifier = Modifier.fillMaxSize()
-    ) { paddingValues ->
+                    },
+                    selectedItemTitle = selectedItemTitle
+                )
+            },
+            snackbarHost = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 70.dp) // adjust distance from top bar
+                        .wrapContentHeight(Alignment.Top),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    SnackbarHost(hostState = snackbarHostState)
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        ) { paddingValues ->
 
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top,
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top,
+                modifier = Modifier
+                    .padding(paddingValues)
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
             AnimatedVisibility(
                 visible = showSearchBar,
                 enter = fadeIn() + slideInVertically(initialOffsetY = { -it / 2 }),
@@ -275,7 +384,11 @@ fun HomeScreen(navController: NavController) {
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.primary,
                         tonalElevation = 2.dp,
-                        modifier = Modifier.size(52.dp)
+                        modifier = Modifier
+                            .size(52.dp)
+                            .onGloballyPositioned {
+                                addButtonBounds = it.boundsInRoot()
+                            }
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
@@ -314,6 +427,9 @@ fun HomeScreen(navController: NavController) {
                         modifier = Modifier
                             .height(32.dp)
                             .defaultMinSize(minWidth = 48.dp)
+                            .onGloballyPositioned {
+                                folderButtonBounds = it.boundsInRoot()
+                            }
                     ) {
                         Box(
                             contentAlignment = Alignment.Center,
@@ -386,6 +502,7 @@ fun HomeScreen(navController: NavController) {
                     var copied by remember(item.id) { mutableStateOf(false) }
                     var isValueVisible by remember(item.id) { mutableStateOf(false) }
                     val isSelected = selectedItemId == item.id
+                    val isTutorialEntryTarget = item.id == filteredItems.firstOrNull()?.id
                     val entryFields = viewModel.getEntryFields(item.id)
                     val primaryValue = entryFields.firstOrNull()?.value_.orEmpty()
                     val copyText = buildEntryText(item.title, entryFields)
@@ -401,6 +518,15 @@ fun HomeScreen(navController: NavController) {
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
+                            .then(
+                                if (isTutorialEntryTarget) {
+                                    Modifier.onGloballyPositioned {
+                                        firstEntryCardBounds = it.boundsInRoot()
+                                    }
+                                } else {
+                                    Modifier
+                                }
+                            )
                             .combinedClickable(
                                 onClick = {
                                     if (selectedItemId != null) {
@@ -735,44 +861,60 @@ fun HomeScreen(navController: NavController) {
                     }
                 }
             }
+            }
+
+            ConfirmActionDialog(
+                showDialog = showConfirmDialog,
+                onDismiss = { showConfirmDialog = false },
+                title = when (confirmActionType) {
+                    ConfirmActionType.HIDE -> if (selectedItemHidden) "Unhide Item?" else "Hide Item?"
+                    ConfirmActionType.DELETE -> "Delete Item?"
+                    else -> ""
+                },
+                message = when (confirmActionType) {
+                    ConfirmActionType.HIDE -> if (selectedItemHidden) {
+                        "Are you sure you want to show this item in your normal list again?"
+                    } else {
+                        "Are you sure you want to hide this item? You can unhide it later."
+                    }
+                    ConfirmActionType.DELETE -> "Are you sure you want to delete this item? This action cannot be undone."
+                    else -> ""
+                },
+                confirmText = "Yes",
+                dismissText = "No",
+                onConfirm = {
+                    selectedItemId?.let { id ->
+                        when (confirmActionType) {
+                            ConfirmActionType.HIDE -> {
+                                if (selectedItemHidden) viewModel.unhideItem(id)
+                                else viewModel.hideItem(id)
+                            }
+                            ConfirmActionType.DELETE -> viewModel.deleteItem(id)
+                            else -> {}
+                        }
+                    }
+                    selectedItemId = null
+                    selectedItemTitle = null
+                    selectedItemHidden = false
+                    showConfirmDialog = false
+                }
+            )
         }
 
-        ConfirmActionDialog(
-            showDialog = showConfirmDialog,
-            onDismiss = { showConfirmDialog = false },
-            title = when (confirmActionType) {
-                ConfirmActionType.HIDE -> if (selectedItemHidden) "Unhide Item?" else "Hide Item?"
-                ConfirmActionType.DELETE -> "Delete Item?"
-                else -> ""
-            },
-            message = when (confirmActionType) {
-                ConfirmActionType.HIDE -> if (selectedItemHidden) {
-                    "Are you sure you want to show this item in your normal list again?"
-                } else {
-                    "Are you sure you want to hide this item? You can unhide it later."
-                }
-                ConfirmActionType.DELETE -> "Are you sure you want to delete this item? This action cannot be undone."
-                else -> ""
-            },
-            confirmText = "Yes",
-            dismissText = "No",
-            onConfirm = {
-                selectedItemId?.let { id ->
-                    when (confirmActionType) {
-                        ConfirmActionType.HIDE -> {
-                            if (selectedItemHidden) viewModel.unhideItem(id)
-                            else viewModel.hideItem(id)
-                        }
-                        ConfirmActionType.DELETE -> viewModel.deleteItem(id)
-                        else -> {}
-                    }
-                }
-                selectedItemId = null
-                selectedItemTitle = null
-                selectedItemHidden = false
-                showConfirmDialog = false
-            }
-        )
+        if (showHomeTutorial && currentTutorialStep != null) {
+            HomeTutorialOverlay(
+                step = currentTutorialStep,
+                stepIndex = tutorialStepIndex,
+                stepCount = tutorialSteps.size,
+                rootSize = rootSize,
+                targetBounds = currentTutorialTargetBounds,
+                onNext = {
+                    tutorialStepIndex = (tutorialStepIndex + 1).coerceAtMost(tutorialSteps.lastIndex)
+                },
+                onSkip = { finishHomeTutorial() },
+                onDone = { finishHomeTutorial() }
+            )
+        }
     }
 }
 
