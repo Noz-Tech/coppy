@@ -156,7 +156,7 @@ fun SettingsScreen(navController: NavController) {
             SettingRow(
                 icon = Lucide.Lock,
                 title = "Lock app on launch",
-                description = "Biometric authentication before entering Coppy",
+                description = "Authenticate before entering Coppy",
                 checked = lockOnLaunch,
                 onCheckedChange = {
                     lockOnLaunch = it
@@ -207,31 +207,31 @@ fun SettingsScreen(navController: NavController) {
                     appSettings.setBiometricOnHiddenItems(it)
                 }
             )
-            SettingRow(
+            CompactSettingRow(
                 icon = Lucide.EyeOff,
                 title = "Show hidden items",
-                description = "Display hidden entries below your regular items",
+                description = "Keep hidden entries visible on the Home list.",
                 checked = showHiddenItems,
-                onCheckedChange = ::setShowHiddenItemsWithGuard
+                onCheckedChange = ::setShowHiddenItemsWithGuard,
             )
-            SettingRow(
+            CompactSettingRow(
                 icon = Lucide.MoonStar,
                 title = "Dark mode",
-                description = "Use the dark appearance across the app",
+                description = "Use Coppy with a darker appearance.",
                 checked = isDarkModeEnabled,
                 onCheckedChange = { isEnabled ->
                     appSettings.setThemeMode(
                         if (isEnabled) AppSettings.ThemeMode.DARK else AppSettings.ThemeMode.LIGHT
                     )
-                }
+                },
             )
 
-            SettingActionRow(
+            CompactSettingRow(
                 icon = Lucide.Trash2,
                 title = "Delete all data",
-                description = "Wipe every saved item and folder on this device",
+                description = "Permanently clear all saved entries and folders.",
                 isDestructive = true,
-                onClick = ::openDeleteAllDataDialog
+                onClick = ::openDeleteAllDataDialog,
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -239,14 +239,12 @@ fun SettingsScreen(navController: NavController) {
             SettingsActionRow(
                 title = "Rate Coppy",
                 icon = Lucide.Star,
-                isCompact = true,
                 onClick = ::openRateAppSheet
             )
 
             SettingsActionRow(
                 title = "Buy me a coffee",
                 icon = Lucide.Coffee,
-                isCompact = true,
                 onClick = {
                     OpenExternalUrl(AppSupport.koFiUrl)
                 }
@@ -255,21 +253,18 @@ fun SettingsScreen(navController: NavController) {
             SettingsActionRow(
                 title = "Help & Tips",
                 icon = Lucide.Info,
-                isCompact = true,
                 onClick = ::openHelpTipsSheet
             )
 
             SettingsActionRow(
                 title = "Terms & Condition",
                 icon = Lucide.FileText,
-                isCompact = true,
                 onClick = { openPolicySheet(PolicySheet.Terms) }
             )
 
             SettingsActionRow(
                 title = "Data Privacy",
                 icon = Lucide.ShieldCheck,
-                isCompact = true,
                 onClick = { openPolicySheet(PolicySheet.Privacy) }
             )
 
@@ -279,7 +274,6 @@ fun SettingsScreen(navController: NavController) {
 
             StaticInfoRow(
                 value = AppVersion.name.toDisplayVersion(),
-                isCompact = true
             )
         }
 
@@ -417,58 +411,29 @@ private fun SettingRow(
 }
 
 @Composable
-private fun SettingActionRow(
+private fun CompactSettingRow(
     icon: ImageVector,
     title: String,
-    description: String,
-    isDestructive: Boolean = false,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.size(18.dp)
-        )
-        Spacer(modifier = Modifier.size(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                color = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            )
-        }
-    }
-}
-
-@Composable
-private fun SettingsActionRow(
-    title: String,
-    icon: ImageVector,
     description: String? = null,
+    checked: Boolean? = null,
     isDestructive: Boolean = false,
-    isCompact: Boolean = false,
-    onClick: () -> Unit,
+    onCheckedChange: ((Boolean) -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
 ) {
+    val contentColor = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(onClick = onClick)
+                } else {
+                    Modifier
+                }
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        val contentColor = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
         Icon(
             imageVector = icon,
             contentDescription = null,
@@ -479,21 +444,52 @@ private fun SettingsActionRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = if (isCompact) {
-                    MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium)
-                } else {
-                    MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
-                },
-                color = contentColor
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                color = contentColor,
             )
             description?.let {
                 Text(
                     text = it,
-                    style = MaterialTheme.typography.bodyMedium.copy(
+                    style = MaterialTheme.typography.bodySmall.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
             }
+        }
+        checked?.let { isChecked ->
+            Switch(
+                checked = isChecked,
+                onCheckedChange = { onCheckedChange?.invoke(it) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingsActionRow(
+    title: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.size(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
