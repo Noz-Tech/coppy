@@ -206,15 +206,15 @@ private fun EntryFieldRow(
     var copied by remember(label, value) { mutableStateOf(false) }
 
     Surface(
-        shape = RoundedCornerShape(10.dp),
-        tonalElevation = 1.dp,
+        shape = RoundedCornerShape(8.dp),
+        tonalElevation = 0.5.dp,
         color = MaterialTheme.colorScheme.background,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -224,17 +224,18 @@ private fun EntryFieldRow(
             ) {
                 Text(
                     text = "$label: ",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = value,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
             IconButton(
+                modifier = Modifier.size(32.dp),
                 onClick = {
                     onCopy()
                     copied = true
@@ -247,6 +248,7 @@ private fun EntryFieldRow(
                 Icon(
                     imageVector = if (copied) Lucide.CopyCheck else Lucide.Copy,
                     contentDescription = if (copied) "Copied" else "Copy",
+                    modifier = Modifier.size(16.dp),
                     tint = if (copied)
                         MaterialTheme.colorScheme.primary
                     else
