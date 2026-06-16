@@ -618,6 +618,7 @@ fun HomeScreen(navController: NavController) {
                                             description = "Authenticate to copy this value"
                                         ) {
                                             CopyToClipboard(copyText)
+                                            appSettings.recordCopyAction()
                                             copied = true
                                             coroutineScope.launch {
                                                 delay(3000)
@@ -816,6 +817,7 @@ fun HomeScreen(navController: NavController) {
                                                 description = "Authenticate to copy this value"
                                             ) {
                                                 CopyToClipboard(copyText)
+                                                appSettings.recordCopyAction()
                                                 copied = true
                                                 coroutineScope.launch {
                                                     delay(3000)

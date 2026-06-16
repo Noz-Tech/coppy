@@ -44,10 +44,12 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
 import org.noztek.coppy.feature.home.presentation.composables.CreateGroupBottomSheet
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.getKoin
 import org.noztek.coppy.feature.home.domain.model.EntryFieldInput
 import org.noztek.coppy.feature.home.presentation.composables.CreateListTopBar
 import org.noztek.coppy.feature.home.presentation.viewmodels.CreateListViewModel
 import org.noztek.coppy.navigation.AuthRoutes
+import org.noztek.coppy.core.AppSettings
 
 private enum class EntryType(val value: String, val displayName: String) {
     SimpleEntry("SIMPLE_ENTRY", "Default"),
@@ -127,6 +129,7 @@ fun CreateListScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val viewModel = koinViewModel<CreateListViewModel>()
+    val appSettings: AppSettings = getKoin().get()
     val groups by viewModel.groups.collectAsState()
     val selectedGroupId by viewModel.selectedGroupId.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
@@ -143,6 +146,9 @@ fun CreateListScreen(
     LaunchedEffect(saveState) {
         when (saveState) {
             is SaveState.Success -> {
+                if (existingItem == null) {
+                    appSettings.recordEntryCreated()
+                }
                 navController.navigate(AuthRoutes.Home) {
                     popUpTo(AuthRoutes.Home) {
                         inclusive = true

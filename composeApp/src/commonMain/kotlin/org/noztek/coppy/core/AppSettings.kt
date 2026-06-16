@@ -18,6 +18,10 @@ class AppSettings(private val settings: Settings) {
         private const val KEY_HOME_ONBOARDING_COMPLETED = "home_onboarding_completed"
         private const val KEY_HOME_ONBOARDING_REPLAY_PENDING = "home_onboarding_replay_pending"
         private const val KEY_THEME_MODE = "theme_mode"
+        private const val KEY_ENTRY_CREATE_COUNT = "entry_create_count"
+        private const val KEY_COPY_ACTION_COUNT = "copy_action_count"
+        private const val KEY_RATE_PROMPT_PENDING = "rate_prompt_pending"
+        private const val KEY_RATE_PROMPT_HANDLED = "rate_prompt_handled"
     }
 
     enum class ThemeMode {
@@ -40,6 +44,8 @@ class AppSettings(private val settings: Settings) {
     val homeOnboardingReplayPending = _homeOnboardingReplayPending.asStateFlow()
     private val _themeMode = MutableStateFlow(readThemeMode())
     val themeMode = _themeMode.asStateFlow()
+    private val _ratePromptPending = MutableStateFlow(settings.getBoolean(KEY_RATE_PROMPT_PENDING, false))
+    val ratePromptPending = _ratePromptPending.asStateFlow()
 
     fun setFirstLaunch() {
         settings.putBoolean(KEY_IS_FIRST_LAUNCH, false)
@@ -114,6 +120,35 @@ class AppSettings(private val settings: Settings) {
         _themeMode.value = mode
     }
 
+    fun recordEntryCreated() {
+        val nextCount = settings.getInt(KEY_ENTRY_CREATE_COUNT, 0) + 1
+        settings.putInt(KEY_ENTRY_CREATE_COUNT, nextCount)
+        updateRatePromptEligibility(
+            entryCreateCount = nextCount,
+            copyActionCount = settings.getInt(KEY_COPY_ACTION_COUNT, 0)
+        )
+    }
+
+    fun recordCopyAction() {
+        val nextCount = settings.getInt(KEY_COPY_ACTION_COUNT, 0) + 1
+        settings.putInt(KEY_COPY_ACTION_COUNT, nextCount)
+        updateRatePromptEligibility(
+            entryCreateCount = settings.getInt(KEY_ENTRY_CREATE_COUNT, 0),
+            copyActionCount = nextCount
+        )
+    }
+
+    fun clearRatePromptPending() {
+        settings.putBoolean(KEY_RATE_PROMPT_PENDING, false)
+        _ratePromptPending.value = false
+    }
+
+    fun markRatePromptHandled() {
+        settings.putBoolean(KEY_RATE_PROMPT_HANDLED, true)
+        settings.putBoolean(KEY_RATE_PROMPT_PENDING, false)
+        _ratePromptPending.value = false
+    }
+
     fun isFirstLaunch(): Boolean {
         return settings.getBoolean(KEY_IS_FIRST_LAUNCH, true)
     }
@@ -158,8 +193,28 @@ class AppSettings(private val settings: Settings) {
         return settings.getBoolean(KEY_HOME_ONBOARDING_REPLAY_PENDING, false)
     }
 
+    fun resetRatePromptState() {
+        settings.putInt(KEY_ENTRY_CREATE_COUNT, 0)
+        settings.putInt(KEY_COPY_ACTION_COUNT, 0)
+        settings.putBoolean(KEY_RATE_PROMPT_PENDING, false)
+        settings.putBoolean(KEY_RATE_PROMPT_HANDLED, false)
+        _ratePromptPending.value = false
+    }
+
     private fun readThemeMode(): ThemeMode {
         val raw = settings.getStringOrNull(KEY_THEME_MODE) ?: return ThemeMode.SYSTEM
         return ThemeMode.entries.firstOrNull { it.name == raw } ?: ThemeMode.SYSTEM
+    }
+
+    private fun updateRatePromptEligibility(
+        entryCreateCount: Int,
+        copyActionCount: Int,
+    ) {
+        if (settings.getBoolean(KEY_RATE_PROMPT_HANDLED, false)) return
+        val eligible = entryCreateCount >= 2 || copyActionCount >= 3
+        if (eligible) {
+            settings.putBoolean(KEY_RATE_PROMPT_PENDING, true)
+            _ratePromptPending.value = true
+        }
     }
 }

@@ -47,9 +47,12 @@ import com.composables.icons.lucide.Bolt
 import com.composables.icons.lucide.Monitor
 import com.composables.icons.lucide.FileText
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.MessageSquare
 import com.composables.icons.lucide.MoonStar
+import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.Sun
 import com.composables.icons.lucide.ShieldCheck
+import org.noztek.coppy.core.AppSupport
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.composables.icons.lucide.Info
 import org.jetbrains.compose.resources.painterResource
@@ -59,6 +62,7 @@ import org.noztek.coppy.core.AppVersion
 import org.noztek.coppy.core.database.VaultDataResetter
 import org.noztek.coppy.core.util.BiometricAuthResult
 import org.noztek.coppy.core.util.BiometricAuthenticator
+import org.noztek.coppy.core.util.OpenExternalUrl
 import org.noztek.coppy.navigation.GuestRoutes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -77,12 +81,14 @@ fun SettingsScreen(navController: NavController) {
     var showDeleteAllDataDialog by remember { mutableStateOf(false) }
     var showHelpTipsSheet by remember { mutableStateOf(false) }
     var showAppearanceSheet by remember { mutableStateOf(false) }
+    var showRateAppSheet by remember { mutableStateOf(false) }
     var policySheet by remember { mutableStateOf<PolicySheet?>(null) }
     val biometricAuthenticator = remember { BiometricAuthenticator() }
 
     fun openPolicySheet(sheet: PolicySheet) {
         showDeleteAllDataDialog = false
         showHelpTipsSheet = false
+        showRateAppSheet = false
         policySheet = sheet
     }
 
@@ -90,6 +96,7 @@ fun SettingsScreen(navController: NavController) {
         policySheet = null
         showHelpTipsSheet = false
         showAppearanceSheet = false
+        showRateAppSheet = false
         showDeleteAllDataDialog = true
     }
 
@@ -97,6 +104,7 @@ fun SettingsScreen(navController: NavController) {
         policySheet = null
         showDeleteAllDataDialog = false
         showAppearanceSheet = false
+        showRateAppSheet = false
         showHelpTipsSheet = true
     }
 
@@ -104,7 +112,16 @@ fun SettingsScreen(navController: NavController) {
         policySheet = null
         showDeleteAllDataDialog = false
         showHelpTipsSheet = false
+        showRateAppSheet = false
         showAppearanceSheet = true
+    }
+
+    fun openRateAppSheet() {
+        policySheet = null
+        showDeleteAllDataDialog = false
+        showHelpTipsSheet = false
+        showAppearanceSheet = false
+        showRateAppSheet = true
     }
 
     fun setShowHiddenItemsWithGuard(isEnabled: Boolean) {
@@ -215,6 +232,13 @@ fun SettingsScreen(navController: NavController) {
             Spacer(modifier = Modifier.weight(1f))
 
             SettingsActionRow(
+                title = "Rate Coppy",
+                icon = Lucide.Star,
+                isCompact = true,
+                onClick = ::openRateAppSheet
+            )
+
+            SettingsActionRow(
                 title = "Help & Tips",
                 icon = Lucide.Info,
                 isCompact = true,
@@ -258,6 +282,7 @@ fun SettingsScreen(navController: NavController) {
                             appSettings.setShowHiddenItems(false)
                             appSettings.resetFirstLaunch()
                             appSettings.resetHomeOnboarding()
+                            appSettings.resetRatePromptState()
                             appSettings.resetSampleDataSeeded()
                             showHiddenItems = false
                             showDeleteAllDataDialog = false
@@ -305,6 +330,20 @@ fun SettingsScreen(navController: NavController) {
                 onThemeSelected = { mode ->
                     appSettings.setThemeMode(mode)
                     showAppearanceSheet = false
+                }
+            )
+        }
+
+        if (showRateAppSheet) {
+            RateAppBottomSheet(
+                onDismiss = { showRateAppSheet = false },
+                onRateApp = {
+                    showRateAppSheet = false
+                    OpenExternalUrl(AppSupport.playStoreUrl)
+                },
+                onSendFeedback = {
+                    showRateAppSheet = false
+                    OpenExternalUrl(AppSupport.feedbackMailTo("Coppy app feedback"))
                 }
             )
         }
@@ -620,6 +659,54 @@ private fun AppearanceBottomSheet(
                     onClick = { onThemeSelected(mode) }
                 )
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RateAppBottomSheet(
+    onDismiss: () -> Unit,
+    onRateApp: () -> Unit,
+    onSendFeedback: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(
+                text = "Rate Coppy",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
+            )
+            Text(
+                text = "If Coppy has been useful, a rating helps other people discover it. If something could be better, you can send feedback directly first.",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            )
+
+            SettingsActionRow(
+                title = "Rate on Play Store",
+                icon = Lucide.Star,
+                onClick = onRateApp
+            )
+
+            SettingsActionRow(
+                title = "Send feedback",
+                icon = Lucide.MessageSquare,
+                onClick = onSendFeedback
+            )
         }
     }
 }

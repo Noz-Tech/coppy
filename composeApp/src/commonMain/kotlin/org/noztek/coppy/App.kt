@@ -11,17 +11,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import org.koin.compose.getKoin
+import org.noztek.coppy.core.AppSupport
 import org.noztek.coppy.core.AppSettings
 import org.noztek.coppy.core.ui.theme.AppTheme
 import org.noztek.coppy.core.util.BiometricAuthResult
 import org.noztek.coppy.core.util.BiometricAuthStatus
 import org.noztek.coppy.core.util.BiometricAuthenticator
+import org.noztek.coppy.core.util.OpenExternalUrl
 import org.noztek.coppy.navigation.AppNavHost
 
 @Composable
 fun App() {
     val appSettings: AppSettings = getKoin().get()
     val themeMode by appSettings.themeMode.collectAsState()
+    val ratePromptPending by appSettings.ratePromptPending.collectAsState()
     val biometricAuthenticator = remember { BiometricAuthenticator() }
     var showBiometricPrompt by remember { mutableStateOf(false) }
     var welcomeCompleted by remember { mutableStateOf(!appSettings.isFirstLaunch()) }
@@ -76,6 +79,38 @@ fun App() {
                         Text("Not now")
                     }
                 },
+            )
+        }
+
+        if (ratePromptPending) {
+            AlertDialog(
+                onDismissRequest = {
+                    appSettings.markRatePromptHandled()
+                },
+                title = { Text("Enjoying Coppy?") },
+                text = {
+                    Text("If Coppy has been useful so far, a quick rating helps other people find it. If something could be better, you can send feedback directly.")
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            appSettings.markRatePromptHandled()
+                            OpenExternalUrl(AppSupport.playStoreUrl)
+                        }
+                    ) {
+                        Text("Rate now")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            appSettings.markRatePromptHandled()
+                            OpenExternalUrl(AppSupport.feedbackMailTo("Coppy app feedback"))
+                        }
+                    ) {
+                        Text("Send feedback")
+                    }
+                }
             )
         }
     }

@@ -44,6 +44,8 @@ import com.composables.icons.lucide.EyeOff
 import com.composables.icons.lucide.Lucide
 import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.getKoin
+import org.noztek.coppy.core.AppSettings
 import org.noztek.coppy.core.util.CopyToClipboard
 import org.noztek.coppy.feature.home.presentation.viewmodels.EntryDetailViewModel
 import androidx.compose.runtime.remember
@@ -57,6 +59,7 @@ fun EntryDetailScreen(
     id: Long
 ) {
     val viewModel = koinViewModel<EntryDetailViewModel>()
+    val appSettings: AppSettings = getKoin().get()
     val entry by viewModel.entry.collectAsState()
     val customFields by viewModel.fields.collectAsState()
     val coroutineScope = rememberCoroutineScope()
@@ -101,7 +104,10 @@ fun EntryDetailScreen(
                 EntryFieldRow(
                     label = label,
                     value = value,
-                    onCopy = { CopyToClipboard(value) }
+                    onCopy = {
+                        CopyToClipboard(value)
+                        appSettings.recordCopyAction()
+                    }
                 )
             }
 
@@ -119,6 +125,7 @@ fun EntryDetailScreen(
                                 }
                             }
                             CopyToClipboard(text.trim())
+                            appSettings.recordCopyAction()
                             copiedAll = true
                             coroutineScope.launch {
                                 delay(3000)
