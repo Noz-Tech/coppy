@@ -5,6 +5,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,6 +21,7 @@ import org.noztek.coppy.navigation.AppNavHost
 @Composable
 fun App() {
     val appSettings: AppSettings = getKoin().get()
+    val themeMode by appSettings.themeMode.collectAsState()
     val biometricAuthenticator = remember { BiometricAuthenticator() }
     var showBiometricPrompt by remember { mutableStateOf(false) }
     var welcomeCompleted by remember { mutableStateOf(!appSettings.isFirstLaunch()) }
@@ -30,7 +32,7 @@ fun App() {
                 biometricAuthenticator.canAuthenticate() == BiometricAuthStatus.AVAILABLE
     }
 
-    AppTheme {
+    AppTheme(themeMode = themeMode) {
         AppNavHost(
             appSettings = appSettings,
             onWelcomeCompleted = {

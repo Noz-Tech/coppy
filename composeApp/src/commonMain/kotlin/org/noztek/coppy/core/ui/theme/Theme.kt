@@ -7,6 +7,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import org.noztek.coppy.core.AppSettings
 
 private val lightScheme = lightColorScheme(
     primary = Color(0xFF6D49FF),     // Brand accent
@@ -55,10 +56,15 @@ val unspecified_scheme = ColorFamily(
 
 @Composable
 fun AppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: AppSettings.ThemeMode = AppSettings.ThemeMode.SYSTEM,
     dynamicColor: Boolean = true,
     content: @Composable() () -> Unit
 ) {
+    val darkTheme = when (themeMode) {
+        AppSettings.ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        AppSettings.ThemeMode.LIGHT -> false
+        AppSettings.ThemeMode.DARK -> true
+    }
     val colorScheme = if (darkTheme) darkScheme else lightScheme
     //val systemUiController = rememberSystemUiController()
     val statusBarColor = colorScheme.primary // You can change this to any color

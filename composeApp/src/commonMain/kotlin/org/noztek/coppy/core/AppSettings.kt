@@ -17,6 +17,13 @@ class AppSettings(private val settings: Settings) {
         private const val KEY_SAMPLE_DATA_SEEDED = "sample_data_seeded"
         private const val KEY_HOME_ONBOARDING_COMPLETED = "home_onboarding_completed"
         private const val KEY_HOME_ONBOARDING_REPLAY_PENDING = "home_onboarding_replay_pending"
+        private const val KEY_THEME_MODE = "theme_mode"
+    }
+
+    enum class ThemeMode {
+        SYSTEM,
+        LIGHT,
+        DARK,
     }
 
     private val _lockOnLaunchEnabled = MutableStateFlow(settings.getBoolean(KEY_LOCK_ON_LAUNCH, false))
@@ -31,6 +38,8 @@ class AppSettings(private val settings: Settings) {
         settings.getBoolean(KEY_HOME_ONBOARDING_REPLAY_PENDING, false)
     )
     val homeOnboardingReplayPending = _homeOnboardingReplayPending.asStateFlow()
+    private val _themeMode = MutableStateFlow(readThemeMode())
+    val themeMode = _themeMode.asStateFlow()
 
     fun setFirstLaunch() {
         settings.putBoolean(KEY_IS_FIRST_LAUNCH, false)
@@ -100,6 +109,11 @@ class AppSettings(private val settings: Settings) {
         _homeOnboardingReplayPending.value = false
     }
 
+    fun setThemeMode(mode: ThemeMode) {
+        settings.putString(KEY_THEME_MODE, mode.name)
+        _themeMode.value = mode
+    }
+
     fun isFirstLaunch(): Boolean {
         return settings.getBoolean(KEY_IS_FIRST_LAUNCH, true)
     }
@@ -142,5 +156,10 @@ class AppSettings(private val settings: Settings) {
 
     fun isHomeOnboardingReplayPending(): Boolean {
         return settings.getBoolean(KEY_HOME_ONBOARDING_REPLAY_PENDING, false)
+    }
+
+    private fun readThemeMode(): ThemeMode {
+        val raw = settings.getStringOrNull(KEY_THEME_MODE) ?: return ThemeMode.SYSTEM
+        return ThemeMode.entries.firstOrNull { it.name == raw } ?: ThemeMode.SYSTEM
     }
 }
