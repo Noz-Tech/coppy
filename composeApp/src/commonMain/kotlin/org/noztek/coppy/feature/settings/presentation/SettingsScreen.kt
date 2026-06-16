@@ -43,11 +43,19 @@ import coppy.composeapp.generated.resources.logo
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Bolt
 import com.composables.icons.lucide.Coffee
+import com.composables.icons.lucide.Copy
+import com.composables.icons.lucide.Eye
+import com.composables.icons.lucide.EyeOff
 import com.composables.icons.lucide.FileText
+import com.composables.icons.lucide.Fingerprint
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Lock
 import com.composables.icons.lucide.MessageSquare
+import com.composables.icons.lucide.MoonStar
+import com.composables.icons.lucide.Share2
 import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.ShieldCheck
+import com.composables.icons.lucide.Trash2
 import org.noztek.coppy.core.AppSupport
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.composables.icons.lucide.Info
@@ -146,6 +154,7 @@ fun SettingsScreen(navController: NavController) {
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             SettingRow(
+                icon = Lucide.Lock,
                 title = "Lock app on launch",
                 description = "Biometric authentication before entering Coppy",
                 checked = lockOnLaunch,
@@ -156,6 +165,7 @@ fun SettingsScreen(navController: NavController) {
             )
 
             SettingRow(
+                icon = Lucide.Eye,
                 title = "Biometric before reveal",
                 description = "Protect item value visibility",
                 checked = biometricOnReveal,
@@ -166,6 +176,7 @@ fun SettingsScreen(navController: NavController) {
             )
 
             SettingRow(
+                icon = Lucide.Copy,
                 title = "Biometric before copy",
                 description = "Protect clipboard actions",
                 checked = biometricOnCopy,
@@ -176,6 +187,7 @@ fun SettingsScreen(navController: NavController) {
             )
 
             SettingRow(
+                icon = Lucide.Share2,
                 title = "Biometric before share",
                 description = "Protect data sharing",
                 checked = biometricOnShare,
@@ -186,6 +198,7 @@ fun SettingsScreen(navController: NavController) {
             )
 
             SettingRow(
+                icon = Lucide.Fingerprint,
                 title = "Biometric for hidden items",
                 description = "Authenticate before showing hidden items",
                 checked = biometricOnHiddenItems,
@@ -195,12 +208,14 @@ fun SettingsScreen(navController: NavController) {
                 }
             )
             SettingRow(
+                icon = Lucide.EyeOff,
                 title = "Show hidden items",
                 description = "Display hidden entries below your regular items",
                 checked = showHiddenItems,
                 onCheckedChange = ::setShowHiddenItemsWithGuard
             )
             SettingRow(
+                icon = Lucide.MoonStar,
                 title = "Dark mode",
                 description = "Use the dark appearance across the app",
                 checked = isDarkModeEnabled,
@@ -212,6 +227,7 @@ fun SettingsScreen(navController: NavController) {
             )
 
             SettingActionRow(
+                icon = Lucide.Trash2,
                 title = "Delete all data",
                 description = "Wipe every saved item and folder on this device",
                 isDestructive = true,
@@ -367,6 +383,7 @@ private fun SettingsTopBar(navController: NavController) {
 
 @Composable
 private fun SettingRow(
+    icon: ImageVector,
     title: String,
     description: String,
     checked: Boolean,
@@ -376,6 +393,13 @@ private fun SettingRow(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.size(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
@@ -394,6 +418,7 @@ private fun SettingRow(
 
 @Composable
 private fun SettingActionRow(
+    icon: ImageVector,
     title: String,
     description: String,
     isDestructive: Boolean = false,
@@ -405,6 +430,13 @@ private fun SettingActionRow(
             .clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.size(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
