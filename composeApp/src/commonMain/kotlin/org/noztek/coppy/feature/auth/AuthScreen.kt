@@ -1,18 +1,20 @@
 package org.noztek.coppy.feature.auth
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -27,6 +30,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coppy.composeapp.generated.resources.Res
 import coppy.composeapp.generated.resources.logo
+import com.composables.icons.lucide.Fingerprint
+import com.composables.icons.lucide.Lucide
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.noztek.coppy.core.AppSettings
@@ -42,6 +47,13 @@ fun AuthScreen(
     appSettings: AppSettings
 ) {
     val biometricAuthenticator = remember { BiometricAuthenticator() }
+    val colorScheme = MaterialTheme.colorScheme
+    val backgroundBrush = Brush.verticalGradient(
+        colors = listOf(
+            colorScheme.background,
+            colorScheme.surface
+        )
+    )
 
     fun onSuccess() {
         navController.navigate(AuthRoutes.Home) {
@@ -78,17 +90,19 @@ fun AuthScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(backgroundBrush)
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth()
         ) {
             Image(
                 painter = painterResource(Res.drawable.logo),
                 contentDescription = "Coppy Logo",
-                modifier = Modifier.size(160.dp)
+                modifier = Modifier.size(140.dp)
             )
 
             Spacer(Modifier.height(18.dp))
@@ -99,7 +113,7 @@ fun AuthScreen(
                     fontWeight = FontWeight.Bold,
                     fontSize = 36.sp
                 ),
-                color = MaterialTheme.colorScheme.onSurface,
+                color = colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
 
@@ -108,7 +122,7 @@ fun AuthScreen(
             Text(
                 text = "Authenticate to unlock your private vault.",
                 style = MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = colorScheme.onSurfaceVariant,
                     lineHeight = 24.sp
                 ),
                 textAlign = TextAlign.Center,
@@ -121,14 +135,17 @@ fun AuthScreen(
                 onClick = { authenticate() },
                 shape = CircleShape,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = colorScheme.primary,
+                    contentColor = colorScheme.onPrimary
                 ),
                 modifier = Modifier
-                    .width(160.dp)
-                    .height(56.dp)
+                    .size(64.dp)
             ) {
-                Text("Authenticate")
+                Icon(
+                    imageVector = Lucide.Fingerprint,
+                    contentDescription = "Authenticate",
+                    modifier = Modifier.size(26.dp)
+                )
             }
         }
     }
