@@ -145,8 +145,8 @@ fun HomeScreen(navController: NavController) {
             buildList {
                 add(
                     HomeTutorialStep(
-                        title = "Welcome to your vault",
-                        body = "Coppy keeps the details you use often in one place, so you do not have to dig through documents, notes, or messages each time.",
+                        title = "Welcome to Coppy",
+                        body = "Keeps the details you use often in one place, so you do not have to dig through documents, notes, or messages each time.",
                     )
                 )
                 add(
@@ -167,7 +167,7 @@ fun HomeScreen(navController: NavController) {
                     add(
                         HomeTutorialStep(
                             title = "Use entry actions quickly",
-                            body = "Tap an item to open details. From each card, you can reveal, copy, or share its main value without leaving Home.",
+                            body = "Tap an item to open details. Long press it to edit, delete, or hide it. From each card, you can also reveal, copy, or share its main value without leaving Home.",
                             target = HomeTutorialTarget.FirstEntry
                         )
                     )
@@ -177,12 +177,6 @@ fun HomeScreen(navController: NavController) {
                         title = "Privacy controls live here",
                         body = "Open Settings to manage biometric protection, hidden items, and replay this tutorial later from Help & Tips.",
                         target = HomeTutorialTarget.Settings
-                    )
-                )
-                add(
-                    HomeTutorialStep(
-                        title = "You can revisit this anytime",
-                        body = "If you want a refresher later, go to Settings and open Help & Tips to replay the tutorial and review the main features."
                     )
                 )
             }

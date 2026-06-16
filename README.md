@@ -66,6 +66,52 @@ The codebase also uses dependency injection and feature-based organization to ke
 - [`composeApp/src/iosMain`](./composeApp/src/iosMain) contains iOS-specific implementations
 - [`iosApp`](./iosApp) contains the iOS app entry point and Xcode project
 
+## Google Play ASO
+
+### App Name
+
+`Coppy`
+
+### Short Description
+
+Keep personal details, notes, links, and snippets ready for quick access.
+
+### Full Description
+
+Coppy keeps your personal details, notes, links, and snippets in one secure place, so you can access them quickly whenever you need them.
+
+Important information often gets scattered across hard copy documents, notes, screenshots, copied text, and old messages. Coppy solves that by giving you a simple personal vault for the things you want to keep close and easy to use again.
+
+Whether it is personal records, account details, saved links, private notes, or short snippets, Coppy helps you stay organized without unnecessary complexity.
+
+Use Coppy to:
+
+- store personal details in one place
+- save notes, links, copied text, and useful snippets
+- copy saved content quickly when needed
+- organize entries into folders
+- hide sensitive items for extra privacy
+- protect access and important actions with biometrics
+
+Why Coppy is useful:
+
+- quick access to information you use often
+- less time searching through documents and messages
+- simple organization for important personal content
+- privacy-focused protection for sensitive data
+- clean and lightweight experience
+
+Features:
+
+- secure local storage for your personal information
+- fast copy and reuse for saved details
+- folders for better organization
+- hidden items for extra privacy
+- biometric protection
+- light mode, dark mode, and system theme support
+
+Coppy is built for a simple real-world need: saving important information once and keeping it ready for whenever you need it again.
+
 ## Current App Version
 
 - `Application ID`: `org.noztek.coppy`

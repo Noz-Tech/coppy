@@ -107,7 +107,7 @@ private fun TutorialSpotlight(bounds: Rect) {
             .height(heightDp)
             .border(
                 width = 2.dp,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.primary,
                 shape = RoundedCornerShape(18.dp)
             )
     )
@@ -134,8 +134,18 @@ private fun TutorialTooltip(
     val yPx: Int
 
     if (targetBounds == null || rootSize == IntSize.Zero) {
-        xPx = horizontalMarginPx
-        yPx = verticalMarginPx + 36
+        val centeredX = if (rootSize == IntSize.Zero) {
+            horizontalMarginPx
+        } else {
+            (rootSize.width - tooltipWidthPx) / 2
+        }
+        val maxX = (rootSize.width - tooltipWidthPx - horizontalMarginPx).coerceAtLeast(horizontalMarginPx)
+        xPx = centeredX.coerceIn(horizontalMarginPx, maxX)
+        yPx = if (rootSize == IntSize.Zero) {
+            verticalMarginPx + 36
+        } else {
+            ((rootSize.height - with(density) { 220.dp.roundToPx() }) / 2).coerceAtLeast(verticalMarginPx)
+        }
     } else {
         val centeredX = targetBounds.center.x.roundToInt() - (tooltipWidthPx / 2)
         val maxX = (rootSize.width - tooltipWidthPx - horizontalMarginPx).coerceAtLeast(horizontalMarginPx)

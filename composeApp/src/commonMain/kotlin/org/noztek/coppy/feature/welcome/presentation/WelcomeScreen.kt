@@ -111,7 +111,7 @@ fun WelcomeScreen(
                 Icon(
                     imageVector = Lucide.ChevronRight,
                     contentDescription = "Continue",
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(38.dp)
                 )
             }
         }
