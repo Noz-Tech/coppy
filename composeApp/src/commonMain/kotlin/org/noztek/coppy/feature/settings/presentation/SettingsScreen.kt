@@ -242,8 +242,8 @@ fun SettingsScreen(navController: NavController) {
             )
 
             SettingsActionRow(
-                title = "Support the developer",
-                icon = Lucide.Heart,
+                title = "But me a coffee",
+                icon = Lucide.Coffee,
                 onClick = {
                     OpenExternalUrl(AppSupport.koFiUrl)
                 }
