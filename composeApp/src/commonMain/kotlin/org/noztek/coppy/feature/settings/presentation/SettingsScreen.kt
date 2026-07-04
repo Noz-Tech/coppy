@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -58,6 +57,7 @@ import com.composables.icons.lucide.ShieldCheck
 import com.composables.icons.lucide.Trash2
 import org.noztek.coppy.core.AppSupport
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.composables.icons.lucide.Heart
 import com.composables.icons.lucide.Info
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.getKoin
@@ -143,7 +143,6 @@ fun SettingsScreen(navController: NavController) {
 
     Scaffold(
         topBar = { SettingsTopBar(navController) },
-        contentWindowInsets = WindowInsets(0.dp),
         modifier = Modifier.fillMaxSize()
     ) { paddingValues ->
         Column(
@@ -243,8 +242,8 @@ fun SettingsScreen(navController: NavController) {
             )
 
             SettingsActionRow(
-                title = "Buy me a coffee",
-                icon = Lucide.Coffee,
+                title = "Support the developer",
+                icon = Lucide.Heart,
                 onClick = {
                     OpenExternalUrl(AppSupport.koFiUrl)
                 }
@@ -779,7 +778,7 @@ private val termsSections = listOf(
     ),
     PolicySectionContent(
         title = "Limitation of responsibility",
-        body = "Use Coppy at your own discretion. The app is provided as-is, and Noztech is not responsible for loss of data, device issues, or misuse of saved information."
+        body = "Use Coppy at your own discretion. The app is provided as-is, and Noztek is not responsible for loss of data, device issues, or misuse of saved information."
     )
 )
 

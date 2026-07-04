@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,7 +46,7 @@ fun CustomTextField(
                 onValueChange = onValueChange,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .defaultMinSize(minHeight = 48.dp),
+                    .defaultMinSize(minHeight = 44.dp),
                 shape = RoundedCornerShape(8.dp),
                 keyboardOptions = keyboardOptions,
                 keyboardActions = keyboardActions,
@@ -68,12 +67,12 @@ fun CustomTextField(
                 CircularProgressIndicator(
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
-                        .padding(end = 12.dp)
-                        .size(20.dp),
+                        .padding(end = 10.dp)
+                        .size(18.dp),
                     strokeWidth = 2.dp
                 )
             }
         }
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.size(6.dp))
     }
 }

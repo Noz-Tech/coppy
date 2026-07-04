@@ -50,9 +50,12 @@ import org.noztek.coppy.feature.home.presentation.composables.CreateListTopBar
 import org.noztek.coppy.feature.home.presentation.viewmodels.CreateListViewModel
 import org.noztek.coppy.navigation.AuthRoutes
 import org.noztek.coppy.core.AppSettings
+import org.noztek.coppy.core.util.isValidBrowserUrl
+import org.noztek.coppy.core.util.normalizeBrowserUrl
 
 private enum class EntryType(val value: String, val displayName: String) {
     SimpleEntry("SIMPLE_ENTRY", "Default"),
+    Link("LINK", "Link"),
     Id("ID", "ID"),
     Card("CARD", "Debit / Credit Card"),
     BankAccount("BANK_ACCOUNT", "Bank Account"),
@@ -72,6 +75,9 @@ private data class CustomFieldUi(
 private fun templateFieldsFor(type: EntryType): List<CustomFieldUi> = when (type) {
     EntryType.SimpleEntry -> listOf(
         CustomFieldUi(label = "Value", required = true),
+    )
+    EntryType.Link -> listOf(
+        CustomFieldUi(label = "Link", required = true),
     )
     EntryType.Id -> listOf(
         CustomFieldUi(label = "ID Number", required = true),
@@ -200,6 +206,7 @@ fun CreateListScreen(
                         focusManager.clearFocus(force = true)
                         val validationError = validateEntry(
                             name = name,
+                            entryType = entryType,
                             fields = customFields,
                         )
                         if (validationError != null) {
@@ -497,11 +504,23 @@ fun CreateListScreen(
 
 private fun validateEntry(
     name: String,
+    entryType: EntryType,
     fields: List<CustomFieldUi>,
 ): String? {
     if (name.isBlank()) return "Name is required."
     val missingRequired = fields.firstOrNull { it.required && it.value.isBlank() }
-    return if (missingRequired != null) "${missingRequired.label} is required." else null
+    if (missingRequired != null) return "${missingRequired.label} is required."
+
+    val invalidUrlField = fields.firstOrNull { field ->
+        entryType == EntryType.Link &&
+            field.value.isNotBlank() &&
+            !isValidBrowserUrl(field.value)
+    }
+    return if (invalidUrlField != null) {
+        "Enter a valid link for ${invalidUrlField.label}."
+    } else {
+        null
+    }
 }
 
 @Composable
@@ -585,6 +604,9 @@ private fun formatFieldValueForStorage(
 ): String {
     if (entryType == EntryType.Card && fieldLabel == "Card Number") {
         return value.filterNot(Char::isWhitespace)
+    }
+    if (entryType == EntryType.Link && value.isNotBlank()) {
+        return normalizeBrowserUrl(value)
     }
     return value
 }

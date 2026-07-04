@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -76,12 +75,14 @@ import com.composables.icons.lucide.CopyCheck
 import com.composables.icons.lucide.CreditCard
 import com.composables.icons.lucide.Eye
 import com.composables.icons.lucide.EyeOff
+import com.composables.icons.lucide.ExternalLink
 import com.composables.icons.lucide.FileText
 import com.composables.icons.lucide.Folders
 import com.composables.icons.lucide.IdCard
 import com.composables.icons.lucide.KeyRound
 import com.composables.icons.lucide.Landmark
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Link
 import com.composables.icons.lucide.Plus
 import com.composables.icons.lucide.Search
 import com.composables.icons.lucide.Share2
@@ -99,8 +100,10 @@ import org.noztek.coppy.core.ui.components.ConfirmActionDialog
 import org.noztek.coppy.core.util.BiometricAuthResult
 import org.noztek.coppy.core.util.BiometricAuthenticator
 import org.noztek.coppy.core.util.CopyToClipboard
+import org.noztek.coppy.core.util.OpenExternalUrl
 import org.noztek.coppy.core.util.QuickHaptic
 import org.noztek.coppy.core.util.ShareText
+import org.noztek.coppy.core.util.normalizeBrowserUrl
 import org.noztek.coppy.feature.home.presentation.viewmodels.HomeViewModel
 import org.noztek.coppy.navigation.AuthRoutes
 import org.koin.compose.getKoin
@@ -263,7 +266,6 @@ fun HomeScreen(navController: NavController) {
             .onGloballyPositioned { rootSize = it.size }
     ) {
         Scaffold(
-            contentWindowInsets = WindowInsets(0.dp,0.dp,0.dp,0.dp),
             topBar = {
                 AppTopBar(
                     navController = navController,
@@ -498,7 +500,9 @@ fun HomeScreen(navController: NavController) {
                     val isSelected = selectedItemId == item.id
                     val isTutorialEntryTarget = item.id == filteredItems.firstOrNull()?.id
                     val entryFields = viewModel.getEntryFields(item.id)
-                    val primaryValue = entryFields.firstOrNull()?.value_.orEmpty()
+                    val primaryField = entryFields.firstOrNull()
+                    val primaryValue = primaryField?.value_.orEmpty()
+                    val primaryIsLink = item.entryType == "LINK"
                     val copyText = buildEntryText(item.title, entryFields)
                     val folderName = groupNamesById[item.groupId]
 
@@ -562,9 +566,10 @@ fun HomeScreen(navController: NavController) {
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     MaskableText(
-                                        secretValue = primaryValue.uppercase(),
+                                        secretValue = primaryValue,
                                         entryType = item.entryType,
-                                        isVisible = isValueVisible
+                                        isVisible = isValueVisible,
+                                        isLink = primaryIsLink,
                                     )
                                     folderName?.let { name ->
                                         Text(
@@ -584,7 +589,15 @@ fun HomeScreen(navController: NavController) {
                             ) {
                                 IconButton(
                                     onClick = {
-                                        if (isValueVisible) {
+                                        if (primaryIsLink) {
+                                            runBiometricGuard(
+                                                enabled = appSettings.isBiometricOnRevealEnabled(),
+                                                title = "Open protected link",
+                                                description = "Authenticate to open this link"
+                                            ) {
+                                                OpenExternalUrl(normalizeBrowserUrl(primaryValue))
+                                            }
+                                        } else if (isValueVisible) {
                                             isValueVisible = false
                                         } else {
                                             runBiometricGuard(
@@ -598,9 +611,22 @@ fun HomeScreen(navController: NavController) {
                                     }
                                 ) {
                                     Icon(
-                                        imageVector = if (isValueVisible) Lucide.EyeOff else Lucide.Eye,
-                                        contentDescription = if (isValueVisible) "Hide" else "Show",
+                                        imageVector = if (primaryIsLink) {
+                                            Lucide.ExternalLink
+                                        } else if (isValueVisible) {
+                                            Lucide.EyeOff
+                                        } else {
+                                            Lucide.Eye
+                                        },
+                                        contentDescription = if (primaryIsLink) {
+                                            "Open link"
+                                        } else if (isValueVisible) {
+                                            "Hide"
+                                        } else {
+                                            "Show"
+                                        },
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
 
@@ -628,7 +654,7 @@ fun HomeScreen(navController: NavController) {
                                             MaterialTheme.colorScheme.primary
                                         else
                                             MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
 
@@ -706,7 +732,9 @@ fun HomeScreen(navController: NavController) {
                         var isValueVisible by remember(item.id) { mutableStateOf(false) }
                         val isSelected = selectedItemId == item.id && selectedItemHidden
                         val entryFields = viewModel.getEntryFields(item.id)
-                        val primaryValue = entryFields.firstOrNull()?.value_.orEmpty()
+                        val primaryField = entryFields.firstOrNull()
+                        val primaryValue = primaryField?.value_.orEmpty()
+                        val primaryIsLink = item.entryType == "LINK"
                         val copyText = buildEntryText(item.title, entryFields)
                         val folderName = groupNamesById[item.groupId]
 
@@ -760,9 +788,10 @@ fun HomeScreen(navController: NavController) {
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         MaskableText(
-                                            secretValue = primaryValue.uppercase(),
+                                            secretValue = primaryValue,
                                             entryType = item.entryType,
-                                            isVisible = isValueVisible
+                                            isVisible = isValueVisible,
+                                            isLink = primaryIsLink,
                                         )
                                         folderName?.let { name ->
                                             Text(
@@ -782,7 +811,15 @@ fun HomeScreen(navController: NavController) {
                                 ) {
                                     IconButton(
                                         onClick = {
-                                            if (isValueVisible) {
+                                            if (primaryIsLink) {
+                                                runBiometricGuard(
+                                                    enabled = appSettings.isBiometricOnRevealEnabled(),
+                                                    title = "Open protected link",
+                                                    description = "Authenticate to open this link"
+                                                ) {
+                                                    OpenExternalUrl(normalizeBrowserUrl(primaryValue))
+                                                }
+                                            } else if (isValueVisible) {
                                                 isValueVisible = false
                                             } else {
                                                 runBiometricGuard(
@@ -796,8 +833,20 @@ fun HomeScreen(navController: NavController) {
                                         }
                                     ) {
                                         Icon(
-                                            imageVector = if (isValueVisible) Lucide.EyeOff else Lucide.Eye,
-                                            contentDescription = if (isValueVisible) "Hide" else "Show",
+                                            imageVector = if (primaryIsLink) {
+                                                Lucide.ExternalLink
+                                            } else if (isValueVisible) {
+                                                Lucide.EyeOff
+                                            } else {
+                                                Lucide.Eye
+                                            },
+                                            contentDescription = if (primaryIsLink) {
+                                                "Open link"
+                                            } else if (isValueVisible) {
+                                                "Hide"
+                                            } else {
+                                                "Show"
+                                            },
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.size(18.dp)
                                         )
@@ -958,6 +1007,7 @@ private fun buildEntryText(
 private fun iconForEntryType(entryType: String): ImageVector {
     return when (entryType) {
         "SIMPLE_ENTRY" -> Lucide.FileText
+        "LINK" -> Lucide.Link
         "ID" -> Lucide.IdCard
         "CARD" -> Lucide.CreditCard
         "BANK_ACCOUNT" -> Lucide.Landmark
@@ -971,13 +1021,17 @@ private fun iconForEntryType(entryType: String): ImageVector {
 }
 
 @Composable
-fun MaskableText(secretValue: String, entryType: String, isVisible: Boolean) {
-    val formattedValue = formatPrimaryValueForHome(entryType, secretValue)
+fun MaskableText(secretValue: String, entryType: String, isVisible: Boolean, isLink: Boolean = false) {
+    val formattedValue = formatPrimaryValueForHome(entryType, secretValue, isLink)
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = if (isVisible) formattedValue else maskValue(formattedValue, preserveSpacing = entryType == "CARD"),
+            text = if (isLink || isVisible) {
+                formattedValue
+            } else {
+                maskValue(formattedValue, preserveSpacing = entryType == "CARD")
+            },
             fontWeight = FontWeight.SemiBold,
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurface
@@ -985,13 +1039,14 @@ fun MaskableText(secretValue: String, entryType: String, isVisible: Boolean) {
     }
 }
 
-private fun formatPrimaryValueForHome(entryType: String, value: String): String {
+private fun formatPrimaryValueForHome(entryType: String, value: String, isLink: Boolean): String {
+    if (isLink) return normalizeBrowserUrl(value)
     return when (entryType) {
         "CARD" -> value
             .filterNot(Char::isWhitespace)
             .chunked(4)
             .joinToString(" ")
-        else -> value
+        else -> value.uppercase()
     }
 }
 

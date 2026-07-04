@@ -41,12 +41,17 @@ import com.composables.icons.lucide.Copy
 import com.composables.icons.lucide.CopyCheck
 import com.composables.icons.lucide.Eye
 import com.composables.icons.lucide.EyeOff
+import com.composables.icons.lucide.ExternalLink
 import com.composables.icons.lucide.Lucide
 import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.compose.getKoin
 import org.noztek.coppy.core.AppSettings
 import org.noztek.coppy.core.util.CopyToClipboard
+import org.noztek.coppy.core.util.BiometricAuthResult
+import org.noztek.coppy.core.util.BiometricAuthenticator
+import org.noztek.coppy.core.util.OpenExternalUrl
+import org.noztek.coppy.core.util.normalizeBrowserUrl
 import org.noztek.coppy.feature.home.presentation.viewmodels.EntryDetailViewModel
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -63,6 +68,7 @@ fun EntryDetailScreen(
     val entry by viewModel.entry.collectAsState()
     val customFields by viewModel.fields.collectAsState()
     val coroutineScope = rememberCoroutineScope()
+    val biometricAuthenticator = remember { BiometricAuthenticator() }
     var copiedAll by remember { mutableStateOf(false) }
 
     LaunchedEffect(id) { viewModel.load(id) }
@@ -85,10 +91,16 @@ fun EntryDetailScreen(
         }
 
         val fields = buildList {
-            add("Title" to item.title)
-            add("Type" to item.entryType.toEntryTypeDisplayName())
+            add(DetailFieldRowUi(label = "Title", value = item.title))
+            add(DetailFieldRowUi(label = "Type", value = item.entryType.toEntryTypeDisplayName()))
             customFields.forEach { field ->
-                add(field.label to field.value_)
+                add(
+                    DetailFieldRowUi(
+                        label = field.label,
+                        value = field.value_,
+                        isLink = item.entryType == "LINK",
+                    )
+                )
             }
         }
 
@@ -100,12 +112,27 @@ fun EntryDetailScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(fields) { (label, value) ->
+            items(fields) { field ->
                 EntryFieldRow(
-                    label = label,
-                    value = value,
+                    label = field.label,
+                    value = field.value,
+                    isLink = field.isLink,
+                    onOpenLink = { url ->
+                        if (appSettings.isBiometricOnRevealEnabled()) {
+                            biometricAuthenticator.authenticate(
+                                title = "Open protected link",
+                                description = "Authenticate to open this link",
+                            ) { result ->
+                                if (result == BiometricAuthResult.Success) {
+                                    OpenExternalUrl(url)
+                                }
+                            }
+                        } else {
+                            OpenExternalUrl(url)
+                        }
+                    },
                     onCopy = {
-                        CopyToClipboard(value)
+                        CopyToClipboard(field.value)
                         appSettings.recordCopyAction()
                     }
                 )
@@ -120,8 +147,8 @@ fun EntryDetailScreen(
                     Button(
                         onClick = {
                             val text = buildString {
-                                fields.forEach { (label, value) ->
-                                    appendLine("$label: $value")
+                                fields.forEach { field ->
+                                    appendLine("${field.label}: ${field.value}")
                                 }
                             }
                             CopyToClipboard(text.trim())
@@ -200,6 +227,8 @@ private fun EntryTopBar(
 private fun EntryFieldRow(
     label: String,
     value: String,
+    isLink: Boolean,
+    onOpenLink: (String) -> Unit,
     onCopy: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -237,19 +266,25 @@ private fun EntryFieldRow(
             IconButton(
                 modifier = Modifier.size(32.dp),
                 onClick = {
-                    onCopy()
-                    copied = true
-                    coroutineScope.launch {
-                        delay(3000)
-                        copied = false
+                    if (isLink) {
+                        onOpenLink(normalizeBrowserUrl(value))
+                    } else {
+                        onCopy()
+                        copied = true
+                        coroutineScope.launch {
+                            delay(3000)
+                            copied = false
+                        }
                     }
                 }
             ) {
                 Icon(
-                    imageVector = if (copied) Lucide.CopyCheck else Lucide.Copy,
-                    contentDescription = if (copied) "Copied" else "Copy",
+                    imageVector = if (isLink) Lucide.ExternalLink else if (copied) Lucide.CopyCheck else Lucide.Copy,
+                    contentDescription = if (isLink) "Open link" else if (copied) "Copied" else "Copy",
                     modifier = Modifier.size(16.dp),
-                    tint = if (copied)
+                    tint = if (isLink) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else if (copied)
                         MaterialTheme.colorScheme.primary
                     else
                         MaterialTheme.colorScheme.onSurfaceVariant
@@ -258,6 +293,12 @@ private fun EntryFieldRow(
         }
     }
 }
+
+private data class DetailFieldRowUi(
+    val label: String,
+    val value: String,
+    val isLink: Boolean = false,
+)
 
 private fun String.toTopBarDisplayName(): String {
     val acronyms = setOf("id", "sss", "gsis", "atm", "cvv", "tin")
