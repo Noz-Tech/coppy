@@ -77,7 +77,6 @@ kotlin {
         }
     }
 }
-
 android {
     namespace = "org.noztek.coppy"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -89,6 +88,7 @@ android {
         versionCode = 5
         versionName = "1.0.1"
     }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
